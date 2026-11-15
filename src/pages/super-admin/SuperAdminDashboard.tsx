@@ -5,7 +5,6 @@ import {
   Clock3,
   GraduationCap,
   MapPin,
-  MoreVertical,
   Plus,
   ShieldCheck,
   TicketCheck,
@@ -18,13 +17,11 @@ import {
   Mail,
   Folder,
   CircleDollarSign,
-  UserPlus,
   AlertTriangle,
-  Headset,
   Timer,
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
-import type { ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import {
   Bar,
   CartesianGrid,
@@ -40,70 +37,44 @@ import {
 } from "recharts";
 import { useNavigate } from "react-router-dom";
 import AdminLayout from "../../components/AdminLayout";
+import { api, type HealthStatus, type Institution, type InstitutionStatus, type SuperAdminDashboard as DashboardData } from "../../services/api";
 
-const stats = [
-  { title: "Total Institutions", value: "28", change: "+ 3 this month", icon: Building2, tone: "blue" },
-  { title: "Total Users", value: "24,850", change: "+ 12% this month", icon: Users, tone: "violet" },
-  { title: "Students", value: "18,420", change: "+ 10% this month", icon: GraduationCap, tone: "green" },
-  { title: "Teachers", value: "1,250", change: "+ 8% this month", icon: Users, tone: "orange" },
-  { title: "Parents", value: "4,950", change: "+ 15% this month", icon: UserRound, tone: "rose" },
-  { title: "Annual Revenue", value: "₹ 42,50,000", change: "+ 18% this year", icon: IndianRupee, tone: "purple" },
-];
+const activityMeta = (action: string): { icon: LucideIcon; tone: string; title: string } => {
+  switch (action) {
+    case "INSTITUTION_CREATED": return { icon: Building2, tone: "blue", title: "New institution registered" };
+    case "INSTITUTION_DRAFT": return { icon: Building2, tone: "violet", title: "Institution draft saved" };
+    case "INSTITUTION_UPDATED": return { icon: Building2, tone: "blue", title: "Institution updated" };
+    case "INSTITUTION_ARCHIVED": return { icon: AlertTriangle, tone: "orange", title: "Institution archived" };
+    case "INSTITUTION_RESTORED": return { icon: Building2, tone: "green", title: "Institution restored" };
+    case "INSTITUTION_DELETED": return { icon: AlertTriangle, tone: "rose", title: "Institution deleted" };
+    case "INSTITUTION_IMAGE": return { icon: Building2, tone: "blue", title: "Institution image changed" };
+    case "PAYMENT_RECEIVED": return { icon: CircleDollarSign, tone: "green", title: "Payment received" };
+    case "PAYMENT_DELETED": return { icon: CircleDollarSign, tone: "rose", title: "Payment deleted" };
+    case "LOGIN": return { icon: ShieldCheck, tone: "purple", title: "User signed in" };
+    case "LOGIN_FAILED": return { icon: AlertTriangle, tone: "orange", title: "Failed sign-in attempt" };
+    default: return { icon: Activity, tone: "blue", title: action.toLowerCase().replace(/_/g, " ") };
+  }
+};
+const healthIcon: Record<string, LucideIcon> = {
+  Application: ShieldCheck, Database, "Payment Gateway": CreditCard, "Email Service": Mail, "File Storage": Folder,
+};
+const healthText: Record<HealthStatus, { label: string; dot: string }> = {
+  OPERATIONAL: { label: "Operational", dot: "bg-emerald-500" },
+  DEGRADED: { label: "Degraded", dot: "bg-amber-500" },
+  DOWN: { label: "Down", dot: "bg-rose-500" },
+  NOT_CONFIGURED: { label: "Not configured", dot: "bg-slate-300" },
+};
+const when = (iso: string) => new Date(iso).toLocaleString("en-GB", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit", hour12: true });
+const rupees = (n: number) => `₹ ${Math.round(n).toLocaleString("en-IN")}`;
 
-const institutions = [
-  { name: "Greenfield International School", type: "School", location: "Bangalore, KA", students: "1,250", status: "Active" },
-  { name: "Sunrise Public School", type: "School", location: "Chennai, TN", students: "980", status: "Active" },
-  { name: "Nexus Degree College", type: "College", location: "Coimbatore, TN", students: "2,450", status: "Active" },
-  { name: "Global University", type: "University", location: "Hyderabad, TS", students: "8,200", status: "Active" },
-  { name: "Bright Minds School", type: "School", location: "Mumbai, MH", students: "1,100", status: "Trial" },
-];
-
-const institutionTypes = [
-  { name: "Schools", value: 18, color: "#1478f8", percent: "64%" },
-  { name: "Colleges", value: 6, color: "#10b981", percent: "21%" },
-  { name: "Universities", value: 3, color: "#ff9418", percent: "11%" },
-  { name: "Other", value: 1, color: "#8b43fa", percent: "4%" },
-];
-
-const userGroups = [
-  { label: "Students", value: "18,420", change: "+ 10%", icon: GraduationCap, tone: "green" },
-  { label: "Teachers", value: "1,250", change: "+ 8%", icon: UserRound, tone: "blue" },
-  { label: "Parents", value: "4,950", change: "+ 15%", icon: Users, tone: "rose" },
-  { label: "Staff", value: "230", change: "+ 5%", icon: UserRound, tone: "purple" },
-];
-
-const revenueData = [
-  { month: "Apr", revenue: 8, cumulative: 10 },
-  { month: "May", revenue: 9, cumulative: 11.5 },
-  { month: "Jun", revenue: 10.5, cumulative: 13.2 },
-  { month: "Jul", revenue: 12.8, cumulative: 15.3 },
-  { month: "Aug", revenue: 14.5, cumulative: 17.4 },
-  { month: "Sep", revenue: 15.8, cumulative: 19.6 },
-];
-
-const recentInstitutions = [
-  { name: "Excel International School", type: "School", date: "12 Sep 2025", status: "Trial" },
-  { name: "Heritage College", type: "College", date: "10 Sep 2025", status: "Active" },
-  { name: "Future University", type: "University", date: "08 Sep 2025", status: "Active" },
-  { name: "Maple School", type: "School", date: "05 Sep 2025", status: "Active" },
-  { name: "Riverside International School", type: "School", date: "01 Sep 2025", status: "Expired" },
-];
-
-const activityItems = [
-  { icon: Building2, tone: "blue", title: "New institution registered", detail: "Excel International School", time: "12 Sep 2025, 10:30 AM" },
-  { icon: UserPlus, tone: "green", title: "New user added", detail: "25 students added in Greenfield International School", time: "12 Sep 2025, 09:15 AM" },
-  { icon: CircleDollarSign, tone: "green", title: "Payment received", detail: "₹ 2,50,000 from Nexus Degree College", time: "11 Sep 2025, 06:40 AM" },
-  { icon: AlertTriangle, tone: "orange", title: "Subscription expiring soon", detail: "Sunrise Public School (in 7 days)", time: "11 Sep 2025, 03:20 AM" },
-  { icon: Headset, tone: "purple", title: "Support ticket raised", detail: "Login issue - Heritage College", time: "10 Sep 2025, 11:05 AM" },
-];
-
-const health = [
-  { label: "Application", icon: ShieldCheck },
-  { label: "Database", icon: Database },
-  { label: "Payment Gateway", icon: CreditCard },
-  { label: "Email Service", icon: Mail },
-  { label: "File Storage", icon: Folder },
-];
+const statusLabel: Record<InstitutionStatus, string> = {
+  DRAFT: "Draft", ACTIVE: "Active", TRIAL: "Trial", EXPIRING_SOON: "Expiring Soon", EXPIRED: "Expired", ARCHIVED: "Archived",
+};
+const typeLabel = (t: string) => t.toLowerCase().split("_").map((w) => w[0].toUpperCase() + w.slice(1)).join(" ");
+const place = (i: Institution) => [i.city, i.state].filter(Boolean).join(", ") || "—";
+const fmt = (n: number) => n.toLocaleString("en-IN");
+const shortDate = (iso?: string) => !iso ? "—" : new Date(iso).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" });
+const pct = (n: number, total: number) => (total ? `${Math.round((n / total) * 100)}%` : "0%");
 
 const toneStyles: Record<string, { box: string; icon: string; value: string; change: string }> = {
   blue: { box: "bg-blue-50", icon: "text-blue-600", value: "text-blue-700", change: "text-emerald-600" },
@@ -141,13 +112,12 @@ function PanelHeader({
 }
 
 function StatusPill({ status }: { status: string }) {
-  const className = status === "Active"
-    ? "bg-emerald-50 text-emerald-700"
-    : status === "Trial" || status === "Pending"
-      ? "bg-orange-50 text-orange-700"
-      : "bg-rose-50 text-rose-700";
-  const dotClass = status === "Active" ? "bg-emerald-500" : status === "Trial" || status === "Pending" ? "bg-orange-500" : "bg-rose-500";
-  return <span className={`inline-flex items-center gap-1 rounded px-2 py-1 text-[9px] font-medium ${className}`}><span className={`h-2 w-2 rounded-full ${dotClass}`} />{status}</span>;
+  const tone =
+    status === "Active" ? ["bg-emerald-50 text-emerald-700", "bg-emerald-500"]
+    : status === "Trial" || status === "Expiring Soon" ? ["bg-orange-50 text-orange-700", "bg-orange-500"]
+    : status === "Draft" ? ["bg-slate-100 text-slate-600", "bg-slate-400"]
+    : ["bg-rose-50 text-rose-700", "bg-rose-500"];
+  return <span className={`inline-flex items-center gap-1 whitespace-nowrap rounded px-2 py-1 text-[9px] font-medium ${tone[0]}`}><span className={`h-2 w-2 rounded-full ${tone[1]}`} />{status}</span>;
 }
 
 function SectionCard({ children, className = "" }: { children: ReactNode; className?: string }) {
@@ -214,6 +184,68 @@ function GeographyPanel() {
 
 export default function SuperAdminDashboard() {
   const navigate = useNavigate();
+  const [items, setItems] = useState<Institution[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState("");
+  const [dash, setDash] = useState<DashboardData | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    api.institutions.list({ status: "ALL" })
+      .then((list) => { if (!cancelled) setItems(list.filter((i) => i.status !== "ARCHIVED")); })
+      .catch((err) => { if (!cancelled) setLoadError(err instanceof Error ? err.message : "Could not load institutions."); })
+      .finally(() => { if (!cancelled) setLoading(false); });
+    return () => { cancelled = true; };
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    // Separate from the institutions call: if this one fails the rest of the page still works.
+    api.dashboard.superAdmin().then((d) => { if (!cancelled) setDash(d); }).catch(() => undefined);
+    return () => { cancelled = true; };
+  }, []);
+
+  const total = items.length;
+  const now = new Date();
+  const addedThisMonth = items.filter((i) => { if (!i.createdAt) return false; const d = new Date(i.createdAt); return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear(); }).length;
+  const studentTotal = items.reduce((n, i) => n + i.studentCount, 0);
+  const teacherTotal = items.reduce((n, i) => n + i.teacherCount, 0);
+  const editInstitution = (id: number) => navigate(`/institutions/${id}/edit`);
+
+  const count = (pred: (i: Institution) => boolean) => items.filter(pred).length;
+  const institutionTypes = [
+    { name: "Schools", value: count((i) => i.institutionType === "SCHOOL"), color: "#1478f8" },
+    { name: "Colleges", value: count((i) => i.institutionType === "COLLEGE"), color: "#10b981" },
+    { name: "Universities", value: count((i) => i.institutionType === "UNIVERSITY"), color: "#ff9418" },
+    { name: "Other", value: count((i) => i.institutionType === "COACHING_CENTRE" || i.institutionType === "OTHER"), color: "#8b43fa" },
+  ].map((t) => ({ ...t, percent: pct(t.value, total) }));
+  const subscription = [
+    { name: "Active", value: count((i) => i.status === "ACTIVE"), color: "#10b981" },
+    { name: "Trial", value: count((i) => i.status === "TRIAL"), color: "#ff971e" },
+    { name: "Expiring Soon", value: count((i) => i.status === "EXPIRING_SOON"), color: "#ff4141" },
+    { name: "Expired", value: count((i) => i.status === "EXPIRED"), color: "#9caec2" },
+    { name: "Draft", value: count((i) => i.status === "DRAFT"), color: "#64748b" },
+  ];
+  const stats = [
+    { title: "Total Institutions", value: fmt(total), change: `+ ${addedThisMonth} this month`, icon: Building2, tone: "blue" },
+    { title: "Total Users", value: fmt(studentTotal + teacherTotal), change: "students + teachers", icon: Users, tone: "violet" },
+    { title: "Students", value: fmt(studentTotal), change: "across all institutions", icon: GraduationCap, tone: "green" },
+    { title: "Teachers", value: fmt(teacherTotal), change: "across all institutions", icon: Users, tone: "orange" },
+    { title: "Parents", value: "—", change: "coming soon", icon: UserRound, tone: "rose" },
+    { title: "Annual Revenue", value: dash ? rupees(dash.revenue.annualRevenue) : "…", change: dash ? `FY ${dash.revenue.financialYear}` : "", icon: IndianRupee, tone: "purple" },
+  ];
+  const userGroups = [
+    { label: "Students", value: fmt(studentTotal), change: "all institutions", icon: GraduationCap, tone: "green" },
+    { label: "Teachers", value: fmt(teacherTotal), change: "all institutions", icon: UserRound, tone: "blue" },
+    { label: "Parents", value: dash?.users.parents == null ? "—" : fmt(dash.users.parents), change: "coming soon", icon: Users, tone: "rose" },
+    { label: "Staff", value: dash ? fmt(dash.users.staff) : "…", change: "institution admins", icon: UserRound, tone: "purple" },
+  ];
+  const revenueData = (dash?.revenue.months ?? []).map((m) => ({ month: m.label, revenue: +(m.revenue / 100000).toFixed(2), cumulative: +(m.cumulative / 100000).toFixed(2) }));
+  const hasRevenue = (dash?.revenue.months ?? []).some((m) => m.revenue > 0);
+  const health = dash?.health;
+  const rows = items.slice(0, 5);
+  const recent = [...items].sort((a, b) => (b.createdAt ?? "").localeCompare(a.createdAt ?? "")).slice(0, 5);
+  const emptyRow = (cols: number, text: string) => <tr><td colSpan={cols} className="border border-blue-50 px-2 py-6 text-center text-[10px] text-[#52638f]">{text}</td></tr>;
 
   return (
     <AdminLayout activeItem="Dashboard">
@@ -234,8 +266,8 @@ export default function SuperAdminDashboard() {
               <div className="grid h-[70px] w-[70px] shrink-0 place-items-center rounded-xl bg-gradient-to-br from-blue-50 to-sky-100 text-blue-600"><Building2 size={38} strokeWidth={2.2} /></div>
               <div>
                 <p className="text-[11px] text-[#27376c]">Total Institutions</p>
-                <p className="mt-0.5 text-[26px] font-extrabold leading-none text-[#0c185b]">28</p>
-                <p className="mt-1 text-[10px] font-semibold text-emerald-600">+ 3 this month</p>
+                <p className="mt-0.5 text-[26px] font-extrabold leading-none text-[#0c185b]">{loading ? "…" : fmt(total)}</p>
+                <p className="mt-1 text-[10px] font-semibold text-emerald-600">+ {addedThisMonth} this month</p>
               </div>
             </div>
             <div className="flex h-full flex-col items-end justify-center gap-4">
@@ -244,6 +276,8 @@ export default function SuperAdminDashboard() {
             </div>
           </section>
         </div>
+
+        {loadError && <div role="alert" className="rounded-lg border border-rose-200 bg-rose-50 px-4 py-2.5 text-[11px] text-rose-700">{loadError}</div>}
 
         {/* KPI cards */}
         <section className="grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-6">
@@ -273,13 +307,13 @@ export default function SuperAdminDashboard() {
                   {["Institution Name", "Type", "Location", "Students", "Status", "Action"].map((head) => <th key={head} className="border border-blue-100 px-2 py-2 font-bold">{head}</th>)}
                 </tr></thead>
                 <tbody>
-                  {institutions.map((item) => <tr key={item.name} className="hover:bg-blue-50/50">
+                  {loading ? emptyRow(6, "Loading institutions…") : rows.length === 0 ? emptyRow(6, "No institutions yet. Click “Add Institution” to create one.") : rows.map((item) => <tr key={item.id} className="hover:bg-blue-50/50">
                     <td className="max-w-[220px] truncate border border-blue-50 px-2 py-[7px] text-[#33477c]">{item.name}</td>
-                    <td className="border border-blue-50 px-2 py-[7px] text-[#455a8c]">{item.type}</td>
-                    <td className="border border-blue-50 px-2 py-[7px] text-[#455a8c]">{item.location}</td>
-                    <td className="border border-blue-50 px-2 py-[7px] text-[#273a77]">{item.students}</td>
-                    <td className="border border-blue-50 px-2 py-[7px]"><StatusPill status={item.status} /></td>
-                    <td className="border border-blue-50 px-2 py-[7px]"><button onClick={() => navigate("/schools")} className="rounded bg-blue-50 px-2 py-1 text-[9px] font-semibold text-blue-600 hover:bg-blue-100">View</button> <button aria-label={`More actions for ${item.name}`} className="ml-1 text-[#152b70]"><MoreVertical size={13} className="inline" /></button></td>
+                    <td className="border border-blue-50 px-2 py-[7px] text-[#455a8c]">{typeLabel(item.institutionType)}</td>
+                    <td className="border border-blue-50 px-2 py-[7px] text-[#455a8c]">{place(item)}</td>
+                    <td className="border border-blue-50 px-2 py-[7px] text-[#273a77]">{fmt(item.studentCount)}</td>
+                    <td className="border border-blue-50 px-2 py-[7px]"><StatusPill status={statusLabel[item.status]} /></td>
+                    <td className="border border-blue-50 px-2 py-[7px]"><button onClick={() => editInstitution(item.id)} className="rounded bg-blue-50 px-2 py-1 text-[9px] font-semibold text-blue-600 hover:bg-blue-100">Edit</button></td>
                   </tr>)}
                 </tbody>
               </table>
@@ -294,7 +328,7 @@ export default function SuperAdminDashboard() {
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart margin={{ top: 0, right: 0, bottom: 0, left: 0 }}>
                     <Pie
-                      data={institutionTypes}
+                      data={total ? institutionTypes : [{ name: "None", value: 1, color: "#e2edfb" }]}
                       dataKey="value"
                       nameKey="name"
                       cx="50%"
@@ -306,13 +340,13 @@ export default function SuperAdminDashboard() {
                       startAngle={90}
                       endAngle={-270}
                     >
-                      {institutionTypes.map((entry) => <Cell key={entry.name} fill={entry.color} />)}
+                      {(total ? institutionTypes : [{ name: "None", color: "#e2edfb" }]).map((entry) => <Cell key={entry.name} fill={entry.color} />)}
                     </Pie>
                     <Tooltip formatter={(value, name) => [value, name]} />
                   </PieChart>
                 </ResponsiveContainer>
                 <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
-                  <span className="text-[23px] font-extrabold leading-none text-[#101b59]">28</span>
+                  <span className="text-[23px] font-extrabold leading-none text-[#101b59]">{total}</span>
                   <span className="mt-1 text-[10px] text-[#263a7b]">Institutions</span>
                 </div>
               </div>
@@ -354,9 +388,10 @@ export default function SuperAdminDashboard() {
                 <span className="flex items-center gap-1"><span className="h-2 w-2 rounded-sm bg-blue-500" /> Monthly Revenue (₹L)</span>
                 <span className="flex items-center gap-1"><span className="h-[2px] w-3 bg-indigo-700" /> Cumulative Revenue (₹L)</span>
               </div>
+              {dash && !hasRevenue && <p className="mb-1 text-center text-[10px] text-[#52638f]">No payments recorded yet. Record one from <button type="button" onClick={() => navigate("/subscriptions")} className="font-semibold text-blue-600 hover:underline">Subscriptions</button>.</p>}
               <div className="h-[172px] w-full">
                 <ResponsiveContainer width="100%" height="100%">
-                  <ComposedChart data={revenueData} margin={{ top: 5, right: 7, bottom: 0, left: -20 }}>
+                  <ComposedChart data={hasRevenue ? revenueData : revenueData.map((r) => ({ ...r, revenue: 0, cumulative: 0 }))} margin={{ top: 5, right: 7, bottom: 0, left: -20 }}>
                     <CartesianGrid stroke="#e2edfb" strokeDasharray="3 3" vertical={false} />
                     <XAxis dataKey="month" tick={{ fill: "#536a9f", fontSize: 9 }} axisLine={{ stroke: "#d6e5f8" }} tickLine={false} />
                     <YAxis tick={{ fill: "#6176a6", fontSize: 9 }} axisLine={false} tickLine={false} />
@@ -375,26 +410,21 @@ export default function SuperAdminDashboard() {
               <div className="relative h-[165px] min-w-0">
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
-                    <Pie data={[{ name: "Active", value: 22, color: "#10b981" }, { name: "Trial", value: 3, color: "#ff971e" }, { name: "Expiring Soon", value: 2, color: "#ff4141" }, { name: "Expired", value: 1, color: "#9caec2" }]} dataKey="value" innerRadius={48} outerRadius={70} paddingAngle={2} stroke="none" startAngle={90} endAngle={-270}>
-                      {["#10b981", "#ff971e", "#ff4141", "#9caec2"].map((color) => <Cell key={color} fill={color} />)}
+                    <Pie data={total ? subscription : [{ name: "None", value: 1, color: "#e2edfb" }]} dataKey="value" innerRadius={48} outerRadius={70} paddingAngle={2} stroke="none" startAngle={90} endAngle={-270}>
+                      {(total ? subscription : [{ name: "None", color: "#e2edfb" }]).map((entry) => <Cell key={entry.name} fill={entry.color} />)}
                     </Pie>
                     <Tooltip />
                   </PieChart>
                 </ResponsiveContainer>
                 <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
-                  <span className="text-[22px] font-extrabold leading-none text-[#101b59]">28</span>
+                  <span className="text-[22px] font-extrabold leading-none text-[#101b59]">{total}</span>
                   <span className="mt-1 text-[9px] text-[#273b7a]">Institutions</span>
                 </div>
               </div>
               <div className="space-y-3 text-[10px]">
-                {[
-                  ["Active", "22 (79%)", "#10b981"],
-                  ["Trial", "3 (11%)", "#ff971e"],
-                  ["Expiring Soon", "2 (7%)", "#ff4141"],
-                  ["Expired", "1 (3%)", "#9caec2"],
-                ].map(([name, amount, color]) => <div key={name} className="flex items-center justify-between gap-1">
-                  <span className="flex items-center gap-1.5 text-[#263a7a]"><span className="h-3 w-3 rounded-full" style={{ backgroundColor: color }} />{name}</span>
-                  <span className="whitespace-nowrap font-bold text-[#101b59]">{amount}</span>
+                {subscription.map((row) => <div key={row.name} className="flex items-center justify-between gap-1">
+                  <span className="flex items-center gap-1.5 text-[#263a7a]"><span className="h-3 w-3 rounded-full" style={{ backgroundColor: row.color }} />{row.name}</span>
+                  <span className="whitespace-nowrap font-bold text-[#101b59]">{row.value} ({pct(row.value, total)})</span>
                 </div>)}
               </div>
             </div>
@@ -410,30 +440,33 @@ export default function SuperAdminDashboard() {
                 <thead><tr className="bg-[#f5f9ff] text-[#15245e]">
                   {["Institution Name", "Type", "Sign Up Date", "Status", "Action"].map((header) => <th key={header} className="border border-blue-100 px-2 py-2 font-bold">{header}</th>)}
                 </tr></thead>
-                <tbody>{recentInstitutions.map((item) => <tr key={item.name} className="hover:bg-blue-50/50">
+                <tbody>{loading ? emptyRow(5, "Loading…") : recent.length === 0 ? emptyRow(5, "Nothing here yet.") : recent.map((item) => <tr key={item.id} className="hover:bg-blue-50/50">
                   <td className="max-w-[155px] truncate border border-blue-50 px-2 py-[7px] text-[#364a7f]">{item.name}</td>
-                  <td className="border border-blue-50 px-2 py-[7px] text-[#52638f]">{item.type}</td>
-                  <td className="whitespace-nowrap border border-blue-50 px-2 py-[7px] text-[#52638f]">{item.date}</td>
-                  <td className="border border-blue-50 px-2 py-[7px]"><StatusPill status={item.status} /></td>
-                  <td className="border border-blue-50 px-2 py-[7px]"><button onClick={() => navigate("/schools")} className="rounded bg-blue-50 px-2 py-1 text-[9px] font-semibold text-blue-600 hover:bg-blue-100">View</button></td>
+                  <td className="border border-blue-50 px-2 py-[7px] text-[#52638f]">{typeLabel(item.institutionType)}</td>
+                  <td className="whitespace-nowrap border border-blue-50 px-2 py-[7px] text-[#52638f]">{shortDate(item.createdAt)}</td>
+                  <td className="border border-blue-50 px-2 py-[7px]"><StatusPill status={statusLabel[item.status]} /></td>
+                  <td className="border border-blue-50 px-2 py-[7px]"><button onClick={() => editInstitution(item.id)} className="rounded bg-blue-50 px-2 py-1 text-[9px] font-semibold text-blue-600 hover:bg-blue-100">Edit</button></td>
                 </tr>)}</tbody>
               </table>
             </div>
           </SectionCard>
 
           <SectionCard className="2xl:col-span-4">
-            <PanelHeader icon={Timer} title="Recent Activity" action="View All" onAction={() => navigate("/reports")} />
+            <PanelHeader icon={Timer} title="Recent Activity" action="View All" onAction={() => navigate("/audit-logs")} />
             <div className="divide-y divide-blue-50 px-2">
-              {activityItems.map((item) => {
-                const Icon = item.icon;
-                const tone = toneStyles[item.tone];
-                return <div key={item.title} className="flex items-center gap-2.5 py-[7px]">
+              {!dash ? <p className="px-1 py-6 text-center text-[10px] text-[#52638f]">Loading…</p>
+                : dash.activity.length === 0 ? <p className="px-1 py-6 text-center text-[10px] text-[#52638f]">No activity yet.</p>
+                : dash.activity.map((entry) => {
+                const meta = activityMeta(entry.action);
+                const Icon = meta.icon;
+                const tone = toneStyles[meta.tone];
+                return <div key={entry.id} className="flex items-center gap-2.5 py-[7px]">
                   <div className={`grid h-8 w-8 shrink-0 place-items-center rounded-lg ${tone.box} ${tone.icon}`}><Icon size={17} /></div>
                   <div className="min-w-0 flex-1">
-                    <p className="truncate text-[10px] font-bold text-[#15215e]">{item.title}</p>
-                    <p className="truncate text-[9px] text-[#52638f]">{item.detail}</p>
+                    <p className="truncate text-[10px] font-bold text-[#15215e]">{meta.title}</p>
+                    <p className="truncate text-[9px] text-[#52638f]">{entry.description}</p>
                   </div>
-                  <span className="hidden whitespace-nowrap text-[9px] text-[#6678a6] xl:block">{item.time}</span>
+                  <span className="hidden whitespace-nowrap text-[9px] text-[#6678a6] xl:block">{when(entry.createdAt)}</span>
                 </div>;
               })}
             </div>
@@ -442,20 +475,21 @@ export default function SuperAdminDashboard() {
           <SectionCard className="2xl:col-span-3">
             <div className="flex flex-wrap items-center justify-between gap-2 border-b border-blue-50 px-3 py-2.5">
               <div className="flex items-center gap-2.5"><Activity size={21} strokeWidth={2.6} className="text-blue-600" /><h2 className="text-[13px] font-bold text-[#111b69]">System Health</h2></div>
-              <span className="inline-flex items-center gap-1 rounded bg-emerald-50 px-2 py-1 text-[9px] font-semibold text-emerald-700"><span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />All Systems Operational</span>
+              {health && <span className={`inline-flex items-center gap-1 rounded px-2 py-1 text-[9px] font-semibold ${health.overall === "OPERATIONAL" ? "bg-emerald-50 text-emerald-700" : health.overall === "DEGRADED" ? "bg-amber-50 text-amber-700" : "bg-rose-50 text-rose-700"}`}><span className={`h-1.5 w-1.5 rounded-full ${healthText[health.overall].dot}`} />{health.overall === "OPERATIONAL" ? "All Systems Operational" : health.overall === "DEGRADED" ? "Performance Degraded" : "Issue Detected"}</span>}
             </div>
             <div className="px-2 pt-1">
-              {health.map((item) => {
-                const Icon = item.icon;
-                return <div key={item.label} className="flex items-center justify-between gap-2 border-b border-blue-50 px-1.5 py-[7px] text-[10px] last:border-0">
-                  <span className="flex items-center gap-2 text-[#263a7a]"><Icon size={14} />{item.label}</span>
-                  <span className="flex items-center gap-1.5 text-[#263a7a]"><span className="h-2 w-2 rounded-full bg-emerald-500" />Operational</span>
+              {!health ? <p className="px-1 py-6 text-center text-[10px] text-[#52638f]">Checking…</p> : health.checks.map((item) => {
+                const Icon = healthIcon[item.name] ?? Activity;
+                const st = healthText[item.status];
+                return <div key={item.name} title={item.detail} className="flex items-center justify-between gap-2 border-b border-blue-50 px-1.5 py-[7px] text-[10px] last:border-0">
+                  <span className="flex items-center gap-2 text-[#263a7a]"><Icon size={14} />{item.name}</span>
+                  <span className="flex items-center gap-1.5 text-[#263a7a]"><span className={`h-2 w-2 rounded-full ${st.dot}`} />{st.label}</span>
                 </div>;
               })}
             </div>
             <div className="m-2 flex items-center justify-between gap-2 rounded-md bg-blue-50/80 px-2.5 py-2">
-              <div className="flex min-w-0 items-center gap-2"><Clock3 size={19} className="shrink-0 text-blue-600" /><div><p className="text-[9px] font-semibold text-[#263a7a]">Last Updated</p><p className="text-[9px] text-[#52638f]">16 Sep 2025, 10:30 AM</p></div></div>
-              <button onClick={() => navigate("/reports")} className="rounded bg-blue-600 px-3 py-2 text-[9px] font-semibold text-white hover:bg-blue-700">View Logs</button>
+              <div className="flex min-w-0 items-center gap-2"><Clock3 size={19} className="shrink-0 text-blue-600" /><div><p className="text-[9px] font-semibold text-[#263a7a]">Last Updated</p><p className="text-[9px] text-[#52638f]">{health ? when(health.checkedAt) : "—"}</p></div></div>
+              <button onClick={() => navigate("/audit-logs?tab=health")} className="rounded bg-blue-600 px-3 py-2 text-[9px] font-semibold text-white hover:bg-blue-700">View Logs</button>
             </div>
           </SectionCard>
         </div>

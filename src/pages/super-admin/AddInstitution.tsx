@@ -1,5 +1,5 @@
 import { useEffect, useState, type ChangeEvent, type ReactNode } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate, useParams } from "react-router-dom";
 import {
   ArrowLeft,
   ArrowRight,
@@ -10,12 +10,24 @@ import {
   IndianRupee,
   Info,
   Landmark,
+  Loader2,
   LayoutGrid,
   MapPin,
   Settings,
   X,
 } from "lucide-react";
 import AdminLayout from "../../components/AdminLayout";
+import {
+  ApiError,
+  api,
+  type GradingSystemType,
+  type InstitutionDetail,
+  type InstitutionInput,
+  type InstitutionTypeRow,
+  type ModuleCode,
+  type PlanType,
+  type Weekday,
+} from "../../services/api";
 
 type FormState = {
   institutionName: string;
@@ -64,6 +76,8 @@ const initialForm: FormState = {
   description: "",
   contactName: "",
   designation: "",
+  alternateContactName: "",
+  alternateDesignation: "",
   email: "",
   phoneCode: "+91",
   phone: "",
@@ -123,6 +137,102 @@ const steps = [
   { id: "subscription-plan", title: "Subscription Plan" },
   { id: "review-create", title: "Review & Create" },
 ];
+/* ---- form labels <-> API values -------------------------------------------------- */
+const moduleCodes: ModuleCode[] = [
+  "STUDENT_INFORMATION", "ACADEMICS", "ATTENDANCE", "ASSIGNMENTS", "EXAMS_RESULTS", "FEES_PAYMENTS", "LEAVE_MANAGEMENT",
+  "CLUBS_ACTIVITIES", "COMMUNICATIONS", "TRANSPORT", "LIBRARY", "HOSTEL", "INVENTORY", "ALUMNI",
+];
+const gradingLabels: Record<GradingSystemType, string> = { PERCENTAGE: "Percentage", GRADE: "Grade (A–F)", CGPA: "CGPA / GPA", CUSTOM: "Custom" };
+const toLabel = (value: string | null) =>
+  value ? value.toLowerCase().split("_").map((w) => w[0].toUpperCase() + w.slice(1)).join(" ") : "";
+const orNull = (v: string) => (v.trim() === "" ? null : v.trim());
+const toNumber = (v: string) => (v.trim() === "" || Number.isNaN(Number(v)) ? null : Number(v));
+const hhmm = (t: string | null, fallback: string) => (t ? t.slice(0, 5) : fallback);
+
+function toInput(form: FormState, modules: string[], draft: boolean): InstitutionInput {
+  return {
+    name: form.institutionName.trim(),
+    institutionType: form.institutionType || null,
+    affiliation: orNull(form.affiliation),
+    establishmentYear: toNumber(form.establishmentYear),
+    description: orNull(form.description),
+    contactName: orNull(form.contactName),
+    designation: orNull(form.designation),
+    email: orNull(form.email),
+    phoneCode: form.phoneCode,
+    phone: orNull(form.phone),
+    altContactName: orNull(form.alternateContactName),
+    altDesignation: orNull(form.alternateDesignation),
+    altEmail: orNull(form.alternateEmail),
+    altPhoneCode: form.alternatePhoneCode,
+    altPhone: orNull(form.alternatePhone),
+    address: orNull(form.address),
+    country: orNull(form.country),
+    state: orNull(form.state),
+    city: orNull(form.city),
+    pinCode: orNull(form.pinCode),
+    academicStartMonth: months.indexOf(form.academicYearStart) + 1 || 4,
+    dateFormat: form.dateFormat,
+    timeZone: form.timeZone,
+    language: form.language,
+    gradingSystem: (Object.keys(gradingLabels) as GradingSystemType[]).find((k) => gradingLabels[k] === form.gradingSystem) ?? null,
+    currency: form.currency,
+    workingDays: form.workingDays.map((d) => d.toUpperCase() as Weekday),
+    startTime: form.startTime || null,
+    endTime: form.endTime || null,
+    planType: form.planType ? (form.planType.toUpperCase() as PlanType) : null,
+    subscriptionStart: form.startDate || null,
+    subscriptionEnd: form.endDate || null,
+    expectedStudents: toNumber(form.expectedStudents),
+    expectedTeachers: toNumber(form.expectedTeachers),
+    modules: moduleOptions.flatMap((label, i) => (modules.includes(label) ? [moduleCodes[i]] : [])),
+    draft,
+  };
+}
+
+function fromDetail(d: InstitutionDetail): { form: FormState; modules: string[] } {
+  return {
+    form: {
+      ...initialForm,
+      institutionName: d.name,
+      institutionType: d.institutionType ?? "",
+      affiliation: d.affiliation ?? "",
+      establishmentYear: d.establishmentYear ? String(d.establishmentYear) : "",
+      description: d.description ?? "",
+      contactName: d.contactName ?? "",
+      designation: d.designation ?? "",
+      email: d.email ?? "",
+      phoneCode: d.phoneCode ?? "+91",
+      phone: d.phone ?? "",
+      alternateContactName: d.altContactName ?? "",
+      alternateDesignation: d.altDesignation ?? "",
+      alternateEmail: d.altEmail ?? "",
+      alternatePhoneCode: d.altPhoneCode ?? "+91",
+      alternatePhone: d.altPhone ?? "",
+      address: d.address ?? "",
+      country: d.country ?? "India",
+      state: d.state ?? "",
+      city: d.city ?? "",
+      pinCode: d.pinCode ?? "",
+      academicYearStart: months[(d.academicStartMonth || 4) - 1],
+      dateFormat: d.dateFormat ?? initialForm.dateFormat,
+      timeZone: d.timeZone ?? initialForm.timeZone,
+      language: d.language ?? initialForm.language,
+      gradingSystem: d.gradingSystem ? gradingLabels[d.gradingSystem] : "",
+      currency: d.currency ?? initialForm.currency,
+      workingDays: weekdays.filter((day) => d.workingDays.includes(day.toUpperCase() as Weekday)),
+      startTime: hhmm(d.startTime, "08:00"),
+      endTime: hhmm(d.endTime, "15:00"),
+      planType: toLabel(d.planType),
+      startDate: d.subscriptionStart ?? "",
+      endDate: d.subscriptionEnd ?? "",
+      expectedStudents: d.expectedStudents ? String(d.expectedStudents) : "",
+      expectedTeachers: d.expectedTeachers ? String(d.expectedTeachers) : "",
+    },
+    modules: moduleOptions.filter((_, i) => d.modules.includes(moduleCodes[i])),
+  };
+}
+
 const weekdays = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
 const states = ["Andhra Pradesh", "Karnataka", "Kerala", "Maharashtra", "Tamil Nadu", "Telangana", "Delhi", "Gujarat", "Rajasthan", "West Bengal"];
 const cities = ["Bengaluru", "Chennai", "Coimbatore", "Hyderabad", "Kochi", "Mumbai", "Mysuru", "Salem", "Trichy", "Other"];
@@ -228,6 +338,19 @@ function PhoneField({ code, onCode, value, onChange, placeholder }: { code: stri
 
 export default function AddInstitution() {
   const navigate = useNavigate();
+  const { id } = useParams<{ id: string }>();
+  const routerLocation = useLocation();
+  const institutionId = id ? Number(id) : null;
+  const editing = institutionId !== null;
+  const [existing, setExisting] = useState<InstitutionDetail | null>(null);
+  const [types, setTypes] = useState<InstitutionTypeRow[]>([]);
+  const [loading, setLoading] = useState(editing);
+  const [saving, setSaving] = useState(false);
+  const [confirming, setConfirming] = useState(false);
+  const [logoFile, setLogoFile] = useState<File | null>(null);
+  const [bannerFile, setBannerFile] = useState<File | null>(null);
+  const [removeLogo, setRemoveLogo] = useState(false);
+  const [removeBanner, setRemoveBanner] = useState(false);
   const [form, setForm] = useState<FormState>(initialForm);
   const [selectedModules, setSelectedModules] = useState<string[]>(defaultModules);
   const [activeStep, setActiveStep] = useState(0);
@@ -235,6 +358,35 @@ export default function AddInstitution() {
   const [bannerPreview, setBannerPreview] = useState("");
   const [notice, setNotice] = useState("");
   const [formError, setFormError] = useState("");
+
+  // Institution types come from Institution Types in the sidebar, so new ones show up here automatically.
+  useEffect(() => {
+    api.institutionTypes.list().then(setTypes).catch(() => setFormError("Could not load institution types."));
+  }, []);
+  const typeName = (code: string) => types.find((t) => t.code === code)?.name ?? (code ? toLabel(code) : "School");
+
+  // Edit mode: load the institution and fill the form.
+  useEffect(() => {
+    if (institutionId === null) return;
+    let cancelled = false;
+    setLoading(true);
+    api.institutions.get(institutionId)
+      .then((detail) => {
+        if (cancelled) return;
+        const filled = fromDetail(detail);
+        setExisting(detail);
+        setForm(filled.form);
+        setSelectedModules(filled.modules);
+        setLogoPreview(detail.hasLogo ? api.institutions.imageUrl(detail.id, "logo", detail.updatedAt) : "");
+        setBannerPreview(detail.hasBanner ? api.institutions.imageUrl(detail.id, "banner", detail.updatedAt) : "");
+        const flash = (routerLocation.state as { notice?: string } | null)?.notice;
+        if (flash) setNotice(flash);
+      })
+      .catch((err) => { if (!cancelled) setFormError(err instanceof Error ? err.message : "Could not load this institution."); })
+      .finally(() => { if (!cancelled) setLoading(false); });
+    return () => { cancelled = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [institutionId]);
 
   useEffect(() => () => {
     if (logoPreview.startsWith("blob:")) URL.revokeObjectURL(logoPreview);
@@ -259,11 +411,18 @@ export default function AddInstitution() {
     setNotice("");
   }
 
-  function handleImage(event: ChangeEvent<HTMLInputElement>, setPreview: (value: string) => void, maxMb: number) {
+  function handleImage(
+    event: ChangeEvent<HTMLInputElement>,
+    setPreview: (value: string) => void,
+    setFile: (file: File | null) => void,
+    setRemoved: (removed: boolean) => void,
+    maxMb: number,
+  ) {
     const file = event.target.files?.[0];
+    event.target.value = "";                      // lets the same file be picked again
     if (!file) return;
-    if (!file.type.startsWith("image/")) {
-      setFormError("Please select an image file.");
+    if (!["image/png", "image/jpeg", "image/webp"].includes(file.type)) {
+      setFormError("Please select a PNG, JPG or WEBP image.");
       return;
     }
     const maxBytes = maxMb * 1024 * 1024;
@@ -272,6 +431,8 @@ export default function AddInstitution() {
       return;
     }
     setPreview(URL.createObjectURL(file));
+    setFile(file);
+    setRemoved(false);
     setFormError("");
   }
 
@@ -284,7 +445,6 @@ export default function AddInstitution() {
     const missing: string[] = [];
     if (!form.institutionName.trim()) missing.push("Institution Name");
     if (!form.institutionType) missing.push("Institution Type");
-    if (!form.educationLevels.length) missing.push("Education Level");
     if (!form.contactName.trim()) missing.push("Primary Contact Person");
     if (!form.designation.trim()) missing.push("Designation");
     if (!form.email.trim()) missing.push("Email Address");
@@ -301,6 +461,7 @@ export default function AddInstitution() {
     if (form.startDate && form.endDate && form.endDate < form.startDate) missing.push("an End Date after the Start Date");
     if (!form.expectedStudents || Number(form.expectedStudents) < 1) missing.push("Expected Number of Students");
     if (!form.expectedTeachers || Number(form.expectedTeachers) < 1) missing.push("Expected Number of Teachers");
+    if (!form.workingDays.length) missing.push("at least one Working Day");
     if (missing.length) {
       setFormError(`Please complete the required fields: ${missing.join(", ")}.`);
       setNotice("");
@@ -309,20 +470,94 @@ export default function AddInstitution() {
     return true;
   }
 
-  function handleCreate() {
-    if (!validateRequired()) {
+  /** Saves the institution, then uploads or removes the logo / banner if they changed. */
+  async function submit(draft: boolean) {
+    if (saving) return;
+    setNotice("");
+    setFormError("");
+    if (draft) {
+      if (!form.institutionName.trim()) {
+        setFormError("Please enter the Institution Name before saving a draft.");
+        document.getElementById("basic-information")?.scrollIntoView({ behavior: "smooth", block: "start" });
+        return;
+      }
+    } else if (!validateRequired()) {
       document.getElementById("basic-information")?.scrollIntoView({ behavior: "smooth", block: "start" });
       return;
     }
-    setFormError("");
-    setNotice("All required fields are complete. Connect your institution API to create and persist this institution.");
-    setActiveStep(5);
+
+    setSaving(true);
+    let saved: InstitutionDetail;
+    try {
+      const body = toInput(form, selectedModules, draft);
+      saved = editing ? await api.institutions.update(institutionId, body) : await api.institutions.create(body);
+    } catch (err) {
+      setFormError(err instanceof ApiError || err instanceof Error ? err.message : "Could not save the institution.");
+      setSaving(false);
+      document.getElementById("basic-information")?.scrollIntoView({ behavior: "smooth", block: "start" });
+      return;
+    }
+
+    // Images are separate requests; a failure here must not hide that the institution itself was saved.
+    const imageProblems: string[] = [];
+    const sync = async (kind: "logo" | "banner", file: File | null, removed: boolean) => {
+      try {
+        if (file) await api.institutions.uploadImage(saved.id, kind, file);
+        else if (removed) await api.institutions.removeImage(saved.id, kind);
+      } catch (err) {
+        imageProblems.push(`The ${kind} was not saved: ${err instanceof Error ? err.message : "upload failed"}`);
+      }
+    };
+    await sync("logo", logoFile, removeLogo);
+    await sync("banner", bannerFile, removeBanner);
+
+    const verb = editing ? "updated" : draft ? "saved as a draft" : "created";
+    const message = `"${saved.name}" was ${verb}.${imageProblems.length ? " " + imageProblems.join(" ") : ""}`;
+    setSaving(false);
+    if (editing) {
+      const fresh = await api.institutions.get(saved.id).catch(() => saved);
+      setExisting(fresh);
+      setLogoFile(null); setBannerFile(null); setRemoveLogo(false); setRemoveBanner(false);
+      setNotice(message);
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    } else if (imageProblems.length || draft) {
+      // Stay editable: a draft needs finishing, and a failed upload can be retried from the edit page.
+      navigate(`/institutions/${saved.id}/edit`, { replace: true, state: { notice: message } });
+    } else {
+      navigate("/schools", { state: { notice: message } });
+    }
   }
 
-  function handleDraft() {
+  async function handleArchive() {
+    if (institutionId === null) return;
+    setSaving(true);
     setFormError("");
-    setNotice("Draft is ready in this form. Connect your backend to save drafts across sessions.");
+    try {
+      await api.institutions.archive(institutionId);
+      navigate("/schools", { state: { notice: `"${form.institutionName}" was archived. You can restore it from the Archive.` } });
+    } catch (err) {
+      setFormError(err instanceof Error ? err.message : "Could not archive this institution.");
+      setSaving(false);
+      setConfirming(false);
+    }
   }
+
+  async function handleRestore() {
+    if (institutionId === null) return;
+    setSaving(true);
+    setFormError("");
+    try {
+      const restored = await api.institutions.restore(institutionId);
+      setExisting(restored);
+      setNotice(`"${restored.name}" was restored.`);
+    } catch (err) {
+      setFormError(err instanceof Error ? err.message : "Could not restore this institution.");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  const archived = existing?.lifecycle === "ARCHIVED";
 
   const previewModules = [...selectedModules].sort((a, b) => previewRank(a) - previewRank(b)).slice(0, 5);
   const hasPlace = Boolean(form.city || form.state);
@@ -338,16 +573,24 @@ export default function AddInstitution() {
     setNotice("");
   }
 
+  if (loading) {
+    return (
+      <AdminLayout activeItem="Institutions">
+        <div className="flex items-center justify-center gap-2 py-24 text-[12px] text-[#53658f]"><Loader2 size={18} className="animate-spin" /> Loading institution…</div>
+      </AdminLayout>
+    );
+  }
+
   return (
     <AdminLayout activeItem="Institutions">
-      <form onSubmit={(event) => { event.preventDefault(); handleCreate(); }} className="space-y-3">
+      <form onSubmit={(event) => { event.preventDefault(); void submit(false); }} className="space-y-3">
         {/* Page title */}
         <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-[#d8e9fb] bg-white/95 px-4 py-3 shadow-[0_1px_6px_rgba(37,99,235,0.05)]">
           <div className="flex min-w-0 items-center gap-3">
             <Landmark size={36} strokeWidth={2.2} className="shrink-0 text-blue-600" />
             <div className="min-w-0">
-              <h1 className="text-[22px] font-extrabold leading-tight tracking-[-0.5px] text-[#111b70]">Add Institution</h1>
-              <p className="mt-0.5 text-[11px] leading-4 text-[#425585]">Create a new educational institution and configure its details. All information will be used to set up the institution in Classzy.</p>
+              <h1 className="text-[22px] font-extrabold leading-tight tracking-[-0.5px] text-[#111b70]">{editing ? "Edit Institution" : "Add Institution"}</h1>
+              <p className="mt-0.5 text-[11px] leading-4 text-[#425585]">{editing ? "Update this institution's details. Changes apply as soon as you save." : "Create a new educational institution and configure its details. All information will be used to set up the institution in Classzy."}</p>
             </div>
           </div>
           <button type="button" onClick={() => navigate("/schools")} className="inline-flex shrink-0 items-center gap-1.5 rounded-md border border-blue-200 bg-white px-3.5 py-2 text-[11px] font-medium text-blue-600 transition hover:bg-blue-50"><ArrowLeft size={14} /> Back to Institutions</button>
@@ -377,6 +620,14 @@ export default function AddInstitution() {
         {formError && <div role="alert" className="rounded-lg border border-rose-200 bg-rose-50 px-4 py-2.5 text-[11px] leading-5 text-rose-700"><span className="font-bold">Please review:</span> {formError}</div>}
         {notice && <div role="status" className="flex items-start gap-2 rounded-lg border border-[#d8e9fb] bg-gradient-to-r from-[#eff6ff] to-[#f8fcff] px-4 py-2.5 text-[11px] leading-5 text-blue-800"><Info size={15} className="mt-0.5 shrink-0" />{notice}<button type="button" className="ml-auto text-blue-600" onClick={() => setNotice("")} aria-label="Dismiss notice"><X size={15} /></button></div>}
 
+        {archived && (
+          <div role="status" className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-amber-200 bg-amber-50 px-4 py-2.5 text-[11px] leading-5 text-amber-800">
+            <span><span className="font-bold">This institution is archived.</span> Its users can't sign in and it can't be edited until you restore it.</span>
+            <button type="button" disabled={saving} onClick={handleRestore} className="rounded-md border border-amber-300 bg-white px-3 py-1 text-[11px] font-semibold text-amber-800 hover:bg-amber-100 disabled:opacity-60">Restore institution</button>
+          </div>
+        )}
+
+        <fieldset disabled={archived || saving} className="contents">
         {/* Main grid: left 9 cols (two rows of cards) + right 3 cols (live preview) */}
         <div className="grid grid-cols-1 items-start gap-3 xl:grid-cols-12">
           <div className="min-w-0 space-y-3 xl:col-span-9">
@@ -392,7 +643,7 @@ export default function AddInstitution() {
                     </Field>
                     <Field label="Institution Type" required>
                       <select className={controlClass} value={form.institutionType} onChange={(e) => update("institutionType", e.target.value)}>
-                        <option value="">Select Type</option><option>School</option><option>College</option><option>University</option><option>Coaching Centre</option><option>Other</option>
+                        <option value="">Select Type</option>{types.filter((t) => t.active || t.code === form.institutionType).map((t) => <option key={t.code} value={t.code}>{t.name}</option>)}
                       </select>
                     </Field>
                     {/* <Field label="Education Level" required>
@@ -436,12 +687,13 @@ export default function AddInstitution() {
                         <label className="relative flex h-[100px] cursor-pointer flex-col items-center justify-center gap-1 rounded-md border border-dashed border-[#c7d6ec] bg-[#fbfdff] p-2 text-center transition hover:border-blue-400 hover:bg-blue-50/50">
                           <CloudUpload size={22} className="text-blue-500" />
                           <span className="text-[10px] font-medium leading-tight text-[#34477c]">Click to upload logo</span>
-                          <span className="text-[9px] leading-tight text-slate-400">PNG, JPG (Max 2 MB)</span>
-                          <input type="file" accept="image/*" className="absolute inset-0 cursor-pointer opacity-0" onChange={(e) => handleImage(e, setLogoPreview, 2)} aria-label="Upload institution logo" />
+                          <span className="text-[9px] leading-tight text-slate-400">PNG, JPG, WEBP (Max 2 MB)</span>
+                          <input type="file" accept="image/png,image/jpeg,image/webp" className="absolute inset-0 cursor-pointer opacity-0" onChange={(e) => handleImage(e, setLogoPreview, setLogoFile, setRemoveLogo, 2)} aria-label="Upload institution logo" />
                         </label>
                         <div className="flex h-[100px] items-center justify-center overflow-hidden rounded-md bg-gradient-to-br from-slate-100 to-slate-200 text-slate-500">
                           {logoPreview ? <img src={logoPreview} alt="Institution logo preview" className="h-full w-full object-contain" /> : <Landmark size={40} strokeWidth={1.8} />}
                         </div>
+                        {logoPreview && <button type="button" onClick={() => { setLogoPreview(""); setLogoFile(null); setRemoveLogo(true); }} className="col-span-2 -mt-1 justify-self-start text-[9px] font-semibold text-rose-600 hover:underline">Remove logo</button>}
                       </div>
                     </div>
 
@@ -455,10 +707,11 @@ export default function AddInstitution() {
                         <label className="relative flex h-[84px] cursor-pointer flex-col items-center justify-center gap-1 rounded-md border border-dashed border-[#c7d6ec] bg-[#fbfdff] p-2 text-center transition hover:border-blue-400 hover:bg-blue-50/50">
                           <CloudUpload size={20} className="text-blue-500" />
                           <span className="text-[10px] font-medium leading-tight text-[#34477c]">Click to upload banner</span>
-                          <span className="text-[9px] leading-tight text-slate-400">PNG, JPG (Max 5 MB)</span>
-                          <input type="file" accept="image/*" className="absolute inset-0 cursor-pointer opacity-0" onChange={(e) => handleImage(e, setBannerPreview, 5)} aria-label="Upload institution banner" />
+                          <span className="text-[9px] leading-tight text-slate-400">PNG, JPG, WEBP (Max 5 MB)</span>
+                          <input type="file" accept="image/png,image/jpeg,image/webp" className="absolute inset-0 cursor-pointer opacity-0" onChange={(e) => handleImage(e, setBannerPreview, setBannerFile, setRemoveBanner, 5)} aria-label="Upload institution banner" />
                         </label>
                         <div className="h-[84px] overflow-hidden rounded-md"><PreviewSchoolArt image={bannerPreview} /></div>
+                        {bannerPreview && <button type="button" onClick={() => { setBannerPreview(""); setBannerFile(null); setRemoveBanner(true); }} className="col-span-2 -mt-1 justify-self-start text-[9px] font-semibold text-rose-600 hover:underline">Remove banner</button>}
                       </div>
                       <p className="mt-1 text-[9px] leading-4 text-slate-400">Recommended size: 1440 × 360 px</p>
                     </div>
@@ -579,7 +832,7 @@ export default function AddInstitution() {
                 />
                 <div className="space-y-2.5 px-4 pb-4">
                   <div>
-                    <Field label="Plan Type" required><select className={controlClass} value={form.planType} onChange={(e) => update("planType", e.target.value)}><option value="">Select Plan</option><option>Trail</option><option>Standard</option><option>Professional</option><option>Enterprise</option></select></Field>
+                    <Field label="Plan Type" required><select className={controlClass} value={form.planType} onChange={(e) => update("planType", e.target.value)}><option value="">Select Plan</option><option>Trial</option><option>Basic</option><option>Standard</option><option>Premium</option><option>Enterprise</option></select></Field>
                     <div className="mt-1.5 flex justify-end"><button type="button" onClick={() => setNotice("Plan details can be connected to your subscription catalogue when the backend API is available.")} className="text-[10px] font-semibold text-blue-600 hover:text-blue-800">View Plan Details</button></div>
                   </div>
                   <div className="grid grid-cols-2 gap-x-2.5 gap-y-2.5">
@@ -616,7 +869,7 @@ export default function AddInstitution() {
                 </div>
                 <div className="px-0.5 pt-2.5">
                   <p className="break-words text-[13px] font-extrabold leading-4 text-[#10205e]">{form.institutionName || "Greenfield International School"}</p>
-                  <p className="mt-1.5 text-[10px] text-[#586b98]">{form.affiliation || "CBSE"} <span className="mx-1 text-slate-300">|</span> {form.institutionType || "School"} <span className="mx-1 text-slate-300">|</span> Estd. {form.establishmentYear || "2010"}</p>
+                  <p className="mt-1.5 text-[10px] text-[#586b98]">{form.affiliation || "CBSE"} <span className="mx-1 text-slate-300">|</span> {typeName(form.institutionType)} <span className="mx-1 text-slate-300">|</span> Estd. {form.establishmentYear || "2010"}</p>
                   <p className="mt-1.5 flex items-center gap-1 text-[10px] text-[#586b98]"><MapPin size={11} />{location}</p>
                 </div>
               </div>
@@ -627,8 +880,7 @@ export default function AddInstitution() {
               <dl className="space-y-1.5 text-[9px]">
                 {[
                   ["Institution Name", form.institutionName || "Greenfield International School"],
-                  ["Type", form.institutionType || "School"],
-                  ["Education Level", form.educationLevels.join(", ") || "School"],
+                  ["Type", typeName(form.institutionType)],
                   ["Affiliation", form.affiliation || "CBSE"],
                   ["Established", form.establishmentYear || "2010"],
                   ["Contact Person", form.contactName || "-"],
@@ -690,11 +942,26 @@ export default function AddInstitution() {
             </button>
             <div className="flex flex-wrap items-center gap-2.5">
               <button type="button" onClick={() => navigate("/schools")} className="rounded-md border border-blue-300 bg-white px-5 py-2 text-[12px] font-semibold text-blue-600 transition hover:bg-blue-50">Cancel</button>
-              <button type="button" onClick={handleDraft} className="rounded-md border border-blue-300 bg-white px-5 py-2 text-[12px] font-semibold text-blue-600 transition hover:bg-blue-50">Save as Draft</button>
-              <button type="submit" className="inline-flex items-center gap-2 rounded-md bg-blue-600 px-5 py-2 text-[12px] font-bold text-white shadow-sm shadow-blue-200 transition hover:bg-blue-700">Create Institution <ArrowRight size={14} /></button>
+              {editing && !archived && (confirming ? (
+                <span className="inline-flex items-center gap-2 rounded-md border border-rose-200 bg-rose-50 px-3 py-1.5 text-[11px] text-rose-700">
+                  Archive this institution?
+                  <button type="button" onClick={handleArchive} className="font-bold underline">Yes, archive</button>
+                  <button type="button" onClick={() => setConfirming(false)} className="font-semibold">Keep</button>
+                </span>
+              ) : (
+                <button type="button" onClick={() => setConfirming(true)} className="rounded-md border border-rose-300 bg-white px-5 py-2 text-[12px] font-semibold text-rose-600 transition hover:bg-rose-50">Archive</button>
+              ))}
+              {(!editing || existing?.lifecycle === "DRAFT") && (
+                <button type="button" onClick={() => void submit(true)} className="rounded-md border border-blue-300 bg-white px-5 py-2 text-[12px] font-semibold text-blue-600 transition hover:bg-blue-50">Save as Draft</button>
+              )}
+              <button type="submit" className="inline-flex items-center gap-2 rounded-md bg-blue-600 px-5 py-2 text-[12px] font-bold text-white shadow-sm shadow-blue-200 transition hover:bg-blue-700">
+                {saving ? <><Loader2 size={14} className="animate-spin" /> Saving…</> : <>{editing ? (existing?.lifecycle === "DRAFT" ? "Create Institution" : "Save Changes") : "Create Institution"} <ArrowRight size={14} /></>}
+              </button>
             </div>
           </div>
         </section>
+
+        </fieldset>
 
         <footer className="pb-1 pt-0.5 text-center text-[10px] text-slate-400">© {new Date().getFullYear()} Centram Classzy · School Management Platform</footer>
       </form>
