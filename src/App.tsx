@@ -41,6 +41,18 @@ import SupportTickets from "./pages/super-admin/SupportTickets";
 import SystemManagement from "./pages/super-admin/SystemManagement";
 import PlatformSettings from "./pages/super-admin/PlatformSettings";
 import AuditLogs from "./pages/super-admin/AuditLogs";
+import SchoolDashboard from "./pages/school/SchoolDashboard";
+import Admissions from "./pages/school/Admissions";
+import Students from "./pages/school/Students";
+import StudentForm from "./pages/school/StudentForm";
+import StudentView from "./pages/school/StudentView";
+import Academics from "./pages/school/Academics";
+import Fees from "./pages/school/Fees";
+import Communication from "./pages/school/Communication";
+import Calendar from "./pages/school/Calendar";
+import Reports from "./pages/school/Reports";
+import SchoolSettings from "./pages/school/Settings";
+import SchoolSection from "./pages/school/SchoolSection";
 
 // Keep your existing imports for Dashboard and Schools.
 
@@ -52,7 +64,7 @@ function App() {
 
         {/* Keep your existing dashboard routes here. */}
         {/* Example: */}
-        <Route element={<ProtectedRoute />}>
+        <Route element={<ProtectedRoute roles={["SUPER_ADMIN"]} />}>
           <Route path="/dashboard" element={<SuperAdminDashboard />} />
           <Route path="/institutions/new" element={<AddInstitution />} />
           <Route path="/institutions/settings/academic/year" element={<AcademicYear />} />
@@ -110,6 +122,23 @@ function App() {
           <Route path="/institutions/settings/integrations" element={<ComingSoon title="Integrations" />} />
           <Route path="/institutions/settings/branding" element={<ComingSoon title="Branding & Customization" />} /> */}
           {/* <Route path="/schools" element={<SchoolsPage />} /> */}
+        </Route>
+
+        {/* School admin portal: its own layout. School admins land here after login. */}
+        <Route element={<ProtectedRoute roles={["INSTITUTION_ADMIN", "SUPER_ADMIN"]} />}>
+          <Route path="/school" element={<SchoolDashboard />} />
+          <Route path="/school/admissions" element={<Admissions />} />
+          <Route path="/school/students" element={<Students />} />
+          <Route path="/school/students/new" element={<StudentForm />} />
+          <Route path="/school/students/:id" element={<StudentView />} />
+          <Route path="/school/students/:id/edit" element={<StudentForm />} />
+          <Route path="/school/academics" element={<Academics />} />
+          <Route path="/school/fees" element={<Fees />} />
+          <Route path="/school/communication" element={<Communication />} />
+          <Route path="/school/calendar" element={<Calendar />} />
+          <Route path="/school/reports" element={<Reports />} />
+          <Route path="/school/settings" element={<SchoolSettings />} />
+          <Route path="/school/:section" element={<SchoolSection />} />
         </Route>
 
       </Routes>

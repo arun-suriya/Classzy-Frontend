@@ -478,6 +478,89 @@ export interface AuditDetail { row: AuditRow; device: string | null; location: s
 export interface AuditOption { value: string; label: string }
 export interface AuditOptions { events: AuditOption[]; modules: string[]; users: AuditOption[]; statuses: AuditOption[]; ranges: AuditOption[] }
 export interface AuditFilters { q?: string; range?: string; from?: string; to?: string; event?: string; module?: string; user?: string; status?: string; sort?: string }
+export interface SchoolMetric { value: number; changePct: number | null; compare: string | null }
+export interface SchoolPick { id: number; name: string; current: boolean }
+export interface SchoolStage { code: string; label: string; count: number }
+export interface SchoolEvent { id: number; time: string; title: string; location: string | null; category: string }
+export interface SchoolPending { key: string; label: string; count: number }
+export interface SchoolActivity { at: string; text: string; action: string }
+export interface SchoolDashboard {
+  schoolId: number; schoolName: string; hasLogo: boolean; userName: string; years: SchoolPick[]; terms: SchoolPick[]; yearId: number | null; termId: number | null; scopeLabel: string;
+  students: SchoolMetric; staff: SchoolMetric; admissions: SchoolMetric; collected: SchoolMetric; pending: SchoolMetric; enquiries: SchoolMetric;
+  enrollment: { label: string; students: number | null }[]; stages: SchoolStage[]; applicationsTotal: number;
+  fees: { collected: number; pending: number; total: number; percent: number };
+  schedule: SchoolEvent[]; pendingActions: SchoolPending[]; pendingTotal: number; activities: SchoolActivity[];
+}
+export interface SchoolLeaveRow { id: number; teacher: string; leaveType: string; from: string; to: string; reason: string | null; status: string }
+export interface SchoolConcessionRow { id: number; student: string; admissionNo: string; amount: number; reason: string | null; status: string }
+export interface SchoolEventBody { title: string; date: string; time: string; location: string; category: string }
+export interface AdmYear { id: number; name: string; current: boolean }
+export interface AdmClass { id: number; name: string; yearId: number }
+export interface AdmSection { id: number; classId: number; name: string; max: number | null; enrolled: number }
+export interface AdmCode { code: string; label: string }
+export interface AdmOptions { years: AdmYear[]; classes: AdmClass[]; sections: AdmSection[]; stages: AdmCode[]; sources: AdmCode[]; docTypes: AdmCode[] }
+export interface AdmCounts { applications: number; enquiries: number; waitlist: number; offers: number; admitted: number }
+export interface AdmApp { id: number; applicationNo: string; studentName: string; grade: string | null; classId: number | null; yearId: number | null; stage: string; submittedAt: string; guardianName: string | null; phone: string | null; docs: number; docsVerified: number }
+export interface AdmAppPage { items: AdmApp[]; total: number; page: number; size: number }
+export interface AdmDoc { id: number; docType: string; fileName: string; size: number; verified: boolean; uploadedAt: string }
+export interface AdmOffer { id: number; offerNo: string; applicationId: number; applicationNo: string; applicant: string; grade: string | null; expiresOn: string; status: string; sentAt: string | null; respondedAt: string | null; note: string | null; classId: number | null }
+export interface AdmAppDetail { row: AdmApp; dob: string | null; guardianEmail: string | null; waitlistedAt: string | null; studentId: number | null; enquiryId: number | null; documents: AdmDoc[]; offer: AdmOffer | null }
+export interface AdmEnquiry { id: number; enquiryNo: string; name: string; phone: string | null; email: string | null; childName: string | null; grade: string | null; source: string | null; status: string; followUpOn: string | null; note: string | null; applicationId: number | null; createdAt: string }
+export interface AdmEnquiryPage { items: AdmEnquiry[]; total: number; page: number; size: number }
+export interface AdmWaitRow { rank: number; id: number; applicationNo: string; studentName: string; grade: string; waitlistedOn: string }
+export interface AdmWaitlist { seats: number | null; items: AdmWaitRow[] }
+export interface AdmOfferPage { items: AdmOffer[]; total: number; page: number; size: number }
+export interface AdmAdmittedRow { applicationId: number; admissionNo: string | null; studentId: number | null; student: string; grade: string | null; section: string | null; enrolledOn: string | null }
+export interface AdmAdmittedPage { items: AdmAdmittedRow[]; total: number; page: number; size: number }
+export interface AdmAppBody { studentName: string; dob: string; academicYearId: number | null; classId: number | null; guardianName: string; phone: string; email: string; submit: boolean; enquiryId?: number | null }
+export interface AdmEnquiryBody { name: string; phone: string; email: string; childName: string; grade: string; source: string; followUpOn: string; note: string }
+export interface StuCode { code: string; label: string }
+export interface StuOptions { relationships: StuCode[]; docTypes: StuCode[] }
+export interface StuRow { id: number; admissionNo: string; name: string; grade: string | null; classId: number | null; yearId: number | null; section: string | null; sectionId: number | null; active: boolean }
+export interface StuPage { items: StuRow[]; total: number; page: number; size: number; active: number; inactive: number }
+export interface StuDoc { id: number; docType: string; fileName: string; size: number; uploadedAt: string }
+export interface StuDetail { row: StuRow; yearName: string | null; dob: string | null; joiningDate: string | null; guardianName: string | null; relationship: string | null; phone: string | null; email: string | null; address: string | null; inactiveReason: string | null; applicationId: number | null; createdAt: string | null; documents: StuDoc[] }
+export interface StuBody { fullName: string; dob: string; academicYearId: number | null; classId: number | null; sectionId: number | null; joiningDate: string; guardianName: string; relationship: string; phone: string; email: string; address: string }
+export interface AcaTeacher { id: number; name: string }
+export interface AcaSec { id: number; classId: number; grade: string; yearId: number; name: string; teacherId: number | null; teacher: string | null; room: string | null; max: number | null; students: number; active: boolean }
+export interface AcaSubjectOpt { id: number; yearId: number; name: string; code: string; category: string }
+export interface AcaClassSubject { classId: number; subjectId: number; code: string; name: string; category: string; periods: number }
+export interface AcaOptions { years: AdmYear[]; classes: AdmClass[]; sections: AcaSec[]; subjects: AcaSubjectOpt[]; classSubjects: AcaClassSubject[]; teachers: AcaTeacher[]; categories: string[] }
+export interface AcaSubjectBody { classId: number | null; subjectId?: number | null; name?: string; code?: string; category?: string; periods: number | null }
+export interface AcaSecBody { yearId?: number | null; classId?: number | null; newGrade?: string; name: string; teacherId: number | null; room: string; maxStudents: number | null }
+export interface AcaSlot { id: number; name: string; type: string; start: string; end: string }
+export interface AcaCell { slotId: number; dow: number; subjectId: number; subject: string; teacherId: number | null; teacher: string | null }
+export interface AcaLoad { subjectId: number; subject: string; planned: number; scheduled: number }
+export interface AcaHoliday { name: string; start: string; end: string }
+export interface AcaTimetable { section: AcaSec; slots: AcaSlot[]; cells: AcaCell[]; loads: AcaLoad[]; status: string; publishedAt: string | null; holidays: AcaHoliday[] }
+export interface AcaHw { id: number; title: string; description: string | null; sectionId: number; classId: number; grade: string; section: string; subjectId: number; subject: string; dueDate: string; status: string; createdBy: string | null; createdAt: string }
+export interface AcaHwPage { items: AcaHw[]; total: number; page: number; size: number }
+export interface AcaHwBody { sectionId: number | null; subjectId: number | null; title: string; description: string; dueDate: string; status: string }
+export interface AcaAsg extends AcaHw { maxMarks: number; submitted: number; graded: number; total: number }
+export interface AcaAsgPage { items: AcaAsg[]; total: number; page: number; size: number }
+export interface AcaAsgBody extends AcaHwBody { maxMarks: number | null }
+export interface AcaSubmission { studentId: number; admissionNo: string; name: string; submitted: boolean; submittedAt: string | null; marks: number | null; remarks: string | null }
+export interface AcaWorkFilter { classId?: number | null; sectionId?: number | null; subjectId?: number | null; status?: string }
+export interface FinTerm { id: number; yearId: number; name: string; start: string; end: string }
+export interface FinOptions { years: AdmYear[]; terms: FinTerm[]; classes: AdmClass[]; frequencies: AdmCode[]; modes: AdmCode[] }
+export interface FinStudent { id: number; admissionNo: string; name: string; grade: string | null; section: string | null }
+export interface FinInvoice { id: number; invoiceNo: string; studentId: number; student: string; admissionNo: string; grade: string | null; feeType: string; term: string | null; amount: number; net: number; paid: number; balance: number; dueDate: string | null; status: string }
+export interface FinInvoicePage { items: FinInvoice[]; total: number; page: number; size: number; billed: number; collected: number; outstanding: number }
+export interface FinPayRow { id: number; receiptNo: string; amount: number; paidOn: string; mode: string; reference: string | null; notes: string | null; refundable: number }
+export interface FinInvoiceDetail { row: FinInvoice; concession: number; scholarship: number; payments: FinPayRow[] }
+export interface FinStudentPay { paymentId: number; receiptNo: string; invoiceNo: string; feeType: string; paidOn: string; amount: number; refundable: number }
+export interface FinPayBody { invoiceId: number | null; amount: number | null; paidOn: string; mode: string; reference: string; notes: string }
+export interface FinReceipt { paymentId: number; receiptNo: string; school: string; paidOn: string; amount: number; mode: string; reference: string | null; notes: string | null; invoiceNo: string; feeType: string; student: string; admissionNo: string; grade: string | null; section: string | null; invoiceNet: number; balance: number; receivedBy: string | null }
+export interface FinStructure { id: number; yearId: number; classId: number; grade: string; feeHead: string; frequency: string; amount: number; active: boolean; invoices: number }
+export interface FinStructureBody { yearId: number | null; classId: number | null; feeHead: string; frequency: string; amount: number | null; active: boolean }
+export interface FinGenBody { yearId: number | null; classId: number | null; termId: number | null; dueDate: string }
+export interface FinGenResult { created: number; existing: number; termFeesSkipped: number; students: number }
+export interface FinConcession { id: number; student: string; admissionNo: string; grade: string | null; invoiceNo: string | null; feeHead: string | null; percent: number | null; amount: number; reason: string | null; status: string; requestedAt: string }
+export interface FinConcessionPage { items: FinConcession[]; total: number; page: number; size: number }
+export interface FinScholarship { id: number; studentId: number; student: string; admissionNo: string; name: string; award: number; applied: number; validity: string; status: string; year: string }
+export interface FinScholarshipPage { items: FinScholarship[]; total: number; page: number; size: number }
+export interface FinRefund { id: number; refundNo: string; student: string; admissionNo: string; receiptNo: string; amount: number; reason: string | null; status: string; requestedAt: string; decidedAt: string | null }
+export interface FinRefundPage { items: FinRefund[]; total: number; page: number; size: number }
 export interface PlatformAsset { present: boolean; fileName: string | null; size: number; updatedAt: string | null }
 export interface PlatformSettings { values: Record<string, string>; logo: PlatformAsset; favicon: PlatformAsset; options: Record<string, string[]>; updatedAt: string | null }
 export interface SysOverview {
@@ -550,6 +633,42 @@ export interface PaymentMethodRow { id: number; brand: string; last4: string; ex
 export interface PaymentMethodBody { brand: string; last4: string; expiryMonth: number | null; expiryYear: number | null; makeDefault: boolean; }
 export interface InvoiceDetail { invoice: InvoiceRow; billTo: string; institutionEmail: string; taxName: string; taxRate: string; template: string; paymentTerms: string; }
 export interface BillingOverview { stats: BillingStats; revenue: RevenueSummary; statuses: BillingCount[]; plans: BillingCount[]; subscriptions: BillingSubRow[]; renewals: BillingRenewalRow[]; invoices: InvoiceRow[]; methods: PaymentMethodRow[]; settings: Record<string, string>; }
+
+export interface MsgCode { code: string; label: string }
+export interface MsgOptions { classes: { id: number; name: string }[]; sections: { id: number; classId: number; name: string }[]; audiences: MsgCode[]; channels: MsgCode[]; categories: MsgCode[]; announcementAudiences: MsgCode[] }
+export interface MsgSend { audience: string; classId?: number | null; sectionId?: number | null; channel: string; subject: string; body: string; scheduleDate?: string | null; scheduleTime?: string | null }
+export interface MsgRow { id: number; subject: string; audience: string; channel: string; status: string; sentAt: string | null; scheduledAt: string | null; recipients: number; reachable: number; note: string | null; createdBy: string | null }
+export interface MsgPage { items: MsgRow[]; total: number; page: number; size: number }
+export interface MsgRecipient { name: string; studentName: string | null; contact: string | null; reachable: boolean }
+export interface MsgDetail { row: MsgRow; body: string; recipients: MsgRecipient[]; truncated: boolean }
+export interface MsgTemplate { id: number; name: string; category: string; channel: string; subject: string; body: string }
+export type MsgTemplateBody = Omit<MsgTemplate, "id">;
+export interface MsgNotif { id: number; kind: string; title: string; body: string | null; link: string | null; createdAt: string; read: boolean }
+export interface MsgNotifPage { items: MsgNotif[]; total: number; page: number; size: number; unread: number }
+export interface MsgAnnouncement { id: number; title: string; body: string; audience: string; publishDate: string; status: string; createdBy: string | null }
+export interface MsgAnnouncementPage { items: MsgAnnouncement[]; total: number; page: number; size: number }
+export type MsgAnnouncementBody = { title: string; body: string; audience: string; publishDate: string; status: string };
+
+export interface CalOptions { types: { code: string; label: string }[]; audiences: { code: string; label: string }[]; reminders: { code: string; label: string }[]; classes: { id: number; name: string }[]; sections: { id: number; classId: number; name: string }[] }
+export interface CalEvent { id: number; title: string; type: string; allDay: boolean; startDate: string; startTime: string | null; endDate: string; endTime: string | null; audience: string; classId: number | null; sectionId: number | null; audienceLabel: string; location: string | null; description: string | null; reminder: string; createdBy: string | null }
+export interface CalEventBody { title: string; type: string; allDay: boolean; startDate: string; startTime: string; endDate: string; endTime: string; audience: string; classId: number | null; sectionId: number | null; location: string; description: string; reminder: string }
+
+export interface RptOptions { years: { id: number; name: string; current: boolean }[]; classes: { id: number; yearId: number; name: string }[]; sections: { id: number; classId: number; name: string }[]; terms: { id: number; yearId: number; name: string }[]; subjects: { id: number; yearId: number; name: string }[]; reports: { code: string; tab: string; group: string; label: string; available: boolean; reason: string | null }[]; sources: { code: string; label: string; columns: { key: string; label: string; aggregate: boolean }[] }[] }
+export interface RptRun { report: string; yearId?: number | null; classId?: number | null; sectionId?: number | null; termId?: number | null; subjectId?: number | null }
+export interface RptCustom { name: string; source: string; columns: string[]; yearId?: number | null; classId?: number | null; sectionId?: number | null }
+export interface RptTable { title: string; subtitle: string; columns: string[]; numeric: boolean[]; rows: string[][]; total: string[] | null; truncated: boolean; note: string | null }
+export interface RptSaved { id: number; name: string; source: string; columns: string[]; yearId: number | null; classId: number | null; sectionId: number | null; createdBy: string | null }
+
+export interface SetCode { code: string; label: string }
+export interface SetGeneral { name: string; academicYearId: number | null; language: string; timeZone: string; dateFormat: string; hasLogo: boolean }
+export interface SetAcademic { gradingScale: string; periodDuration: number; attendancePerPeriod: boolean; lateMarkingAllowed: boolean; lateMarkingMinutes: number; termsSummary: string; gradesSummary: string }
+export interface SetAdmissions { yearId: number | null; opens: string | null; closes: string | null; documents: string[]; workflow: string }
+export interface SetFees { currency: string; billingFrequency: string; dueDateRule: string; lateFeeRule: string; lateFeeAmount: number; receiptPrefix: string }
+export interface SetIntegration { service: string; label: string; provider: string | null; status: string; providers: string[] }
+export interface SetOptions { years: { id: number; name: string; current: boolean }[]; languages: string[]; timeZones: string[]; dateFormats: string[]; gradingScales: SetCode[]; documents: string[]; workflows: SetCode[]; currencies: string[]; billing: SetCode[]; dueRules: SetCode[]; lateRules: SetCode[]; roles: SetCode[] }
+export interface SetAll { general: SetGeneral; academic: SetAcademic; admissions: SetAdmissions; fees: SetFees; integrations: SetIntegration[]; options: SetOptions }
+export interface SetUser { id: number; fullName: string; email: string; userType: string; role: string; status: string; canSignIn: boolean; self: boolean }
+export interface SetInvited { user: SetUser; temporaryPassword: string | null; canSignIn: boolean }
 
 export const api = {
   auth: {
@@ -790,6 +909,120 @@ export const api = {
       return res.blob();
     },
   },
+  school: {
+    dashboard: (yearId?: number | null, termId?: number | null) => request<SchoolDashboard>("GET", `/school/dashboard${qs({ yearId, termId })}`),
+    addEvent: (b: SchoolEventBody) => request<SchoolEvent>("POST", "/school/events", b),
+    removeEvent: (id: number) => request<void>("DELETE", `/school/events/${id}`),
+    pendingLeave: () => request<SchoolLeaveRow[]>("GET", "/school/leave/pending"),
+    decideLeave: (id: number, approve: boolean) => request<unknown>("POST", `/school/leave/${id}/decide`, { approve }),
+    pendingConcessions: () => request<SchoolConcessionRow[]>("GET", "/school/concessions/pending"),
+    decideConcession: (id: number, approve: boolean) => request<unknown>("POST", `/school/concessions/${id}/decide`, { approve }),
+  },
+  admissions: {
+    options: () => request<AdmOptions>("GET", "/school/admissions/options"),
+    counts: () => request<AdmCounts>("GET", "/school/admissions/counts"),
+    applications: (f: { yearId?: number | null; classId?: number | null; stage?: string; q?: string }, page: number, size = 10) => request<AdmAppPage>("GET", `/school/admissions/applications${qs({ ...f, page, size })}`),
+    application: (id: number) => request<AdmAppDetail>("GET", `/school/admissions/applications/${id}`),
+    createApplication: (b: AdmAppBody) => request<{ id: number; applicationNo: string; stage: string }>("POST", "/school/admissions/applications", b),
+    updateApplication: (id: number, b: AdmAppBody) => request<{ id: number; stage: string }>("PUT", `/school/admissions/applications/${id}`, b),
+    submitApplication: (id: number) => request<unknown>("POST", `/school/admissions/applications/${id}/submit`),
+    setStage: (id: number, stage: string) => request<unknown>("PUT", `/school/admissions/applications/${id}/stage`, { stage }),
+    removeApplication: (id: number) => request<void>("DELETE", `/school/admissions/applications/${id}`),
+    uploadDocument: (appId: number, type: string, file: File) => { const f = new FormData(); f.append("file", file); return request<AdmDoc>("POST", `/school/admissions/applications/${appId}/documents${qs({ type })}`, f); },
+    verifyDocument: (id: number, verified: boolean) => request<unknown>("PUT", `/school/admissions/documents/${id}/verify`, { verified }),
+    removeDocument: (id: number) => request<void>("DELETE", `/school/admissions/documents/${id}`),
+    /** Documents need the sign-in token, so they're fetched as a Blob and saved by the caller. */
+    documentBlob: async (id: number): Promise<Blob> => {
+      const token = session.token();
+      let res: Response;
+      try { res = await fetch(`${BASE_URL}/school/admissions/documents/${id}`, { headers: token ? { Authorization: `Bearer ${token}` } : {} }); }
+      catch { throw new ApiError("Can't reach the server. Check that the backend is running.", 0); }
+      if (!res.ok) throw new ApiError(`Document not available (${res.status}).`, res.status);
+      return res.blob();
+    },
+    enquiries: (f: { status?: string; q?: string }, page: number, size = 10) => request<AdmEnquiryPage>("GET", `/school/admissions/enquiries${qs({ ...f, page, size })}`),
+    createEnquiry: (b: AdmEnquiryBody) => request<{ id: number }>("POST", "/school/admissions/enquiries", b),
+    updateEnquiry: (id: number, b: AdmEnquiryBody) => request<unknown>("PUT", `/school/admissions/enquiries/${id}`, b),
+    setEnquiryStatus: (id: number, stage: string) => request<unknown>("PUT", `/school/admissions/enquiries/${id}/status`, { stage }),
+    removeEnquiry: (id: number) => request<void>("DELETE", `/school/admissions/enquiries/${id}`),
+    waitlist: (classId: number) => request<AdmWaitlist>("GET", `/school/admissions/waitlist${qs({ classId })}`),
+    offers: (f: { status?: string; q?: string }, page: number, size = 10) => request<AdmOfferPage>("GET", `/school/admissions/offers${qs({ ...f, page, size })}`),
+    createOffer: (b: { applicationId: number; expiresOn: string; note: string }) => request<{ id: number }>("POST", "/school/admissions/offers", b),
+    sendOffer: (id: number) => request<unknown>("POST", `/school/admissions/offers/${id}/send`),
+    acceptOffer: (id: number) => request<unknown>("POST", `/school/admissions/offers/${id}/accept`),
+    declineOffer: (id: number) => request<unknown>("POST", `/school/admissions/offers/${id}/decline`),
+    withdrawOffer: (id: number) => request<unknown>("POST", `/school/admissions/offers/${id}/withdraw`),
+    admit: (id: number, sectionId: number) => request<{ studentId: number; admissionNo: string }>("POST", `/school/admissions/offers/${id}/admit`, { sectionId }),
+    admitted: (f: { classId?: number | null; q?: string }, page: number, size = 10) => request<AdmAdmittedPage>("GET", `/school/admissions/admitted${qs({ ...f, page, size })}`),
+  },
+  schoolStudents: {
+    options: () => request<StuOptions>("GET", "/school/students/options"),
+    list: (f: { yearId?: number | null; classId?: number | null; sectionId?: number | null; status?: string; q?: string }, page: number, size = 10) => request<StuPage>("GET", `/school/students${qs({ ...f, page, size })}`),
+    get: (id: number) => request<StuDetail>("GET", `/school/students/${id}`),
+    create: (b: StuBody) => request<{ id: number; admissionNo: string }>("POST", "/school/students", b),
+    update: (id: number, b: StuBody) => request<{ id: number }>("PUT", `/school/students/${id}`, b),
+    setStatus: (id: number, active: boolean, reason?: string) => request<unknown>("PUT", `/school/students/${id}/status`, { active, reason }),
+    uploadDocument: (id: number, type: string, file: File) => { const f = new FormData(); f.append("file", file); return request<StuDoc>("POST", `/school/students/${id}/documents${qs({ type })}`, f); },
+    removeDocument: (id: number) => request<void>("DELETE", `/school/students/documents/${id}`),
+    documentBlob: async (id: number): Promise<Blob> => {
+      const token = session.token();
+      let res: Response;
+      try { res = await fetch(`${BASE_URL}/school/students/documents/${id}`, { headers: token ? { Authorization: `Bearer ${token}` } : {} }); }
+      catch { throw new ApiError("Can't reach the server. Check that the backend is running.", 0); }
+      if (!res.ok) throw new ApiError(`Document not available (${res.status}).`, res.status);
+      return res.blob();
+    },
+  },
+  academics: {
+    options: () => request<AcaOptions>("GET", "/school/academics/options"),
+    addSubject: (b: AcaSubjectBody) => request<{ subjectId: number }>("POST", "/school/academics/subjects", b),
+    setPeriods: (classId: number, subjectId: number, periods: number) => request<void>("PUT", `/school/academics/classes/${classId}/subjects/${subjectId}`, { periods }),
+    removeSubject: (classId: number, subjectId: number) => request<void>("DELETE", `/school/academics/classes/${classId}/subjects/${subjectId}`),
+    sections: (f: { yearId?: number | null; classId?: number | null }) => request<AcaSec[]>("GET", `/school/academics/sections${qs(f)}`),
+    addSection: (b: AcaSecBody) => request<{ id: number }>("POST", "/school/academics/sections", b),
+    updateSection: (id: number, b: AcaSecBody) => request<{ id: number }>("PUT", `/school/academics/sections/${id}`, b),
+    removeSection: (id: number) => request<void>("DELETE", `/school/academics/sections/${id}`),
+    timetable: (sectionId: number) => request<AcaTimetable>("GET", `/school/academics/timetable${qs({ sectionId })}`),
+    setCell: (b: { sectionId: number; slotId: number; dow: number; subjectId: number | null; teacherId: number | null }) => request<unknown>("PUT", "/school/academics/timetable/cell", b),
+    publishTimetable: (sectionId: number, publish: boolean) => request<unknown>("POST", `/school/academics/timetable/${sectionId}/${publish ? "publish" : "unpublish"}`),
+    homework: (f: AcaWorkFilter, page: number, size = 10) => request<AcaHwPage>("GET", `/school/academics/homework${qs({ ...f, page, size })}`),
+    createHomework: (b: AcaHwBody) => request<{ id: number }>("POST", "/school/academics/homework", b),
+    updateHomework: (id: number, b: AcaHwBody) => request<{ id: number }>("PUT", `/school/academics/homework/${id}`, b),
+    homeworkStatus: (id: number, status: string) => request<unknown>("PUT", `/school/academics/homework/${id}/status`, { status }),
+    removeHomework: (id: number) => request<void>("DELETE", `/school/academics/homework/${id}`),
+    assignments: (f: AcaWorkFilter, page: number, size = 10) => request<AcaAsgPage>("GET", `/school/academics/assignments${qs({ ...f, page, size })}`),
+    createAssignment: (b: AcaAsgBody) => request<{ id: number }>("POST", "/school/academics/assignments", b),
+    updateAssignment: (id: number, b: AcaAsgBody) => request<{ id: number }>("PUT", `/school/academics/assignments/${id}`, b),
+    assignmentStatus: (id: number, status: string) => request<unknown>("PUT", `/school/academics/assignments/${id}/status`, { status }),
+    removeAssignment: (id: number) => request<void>("DELETE", `/school/academics/assignments/${id}`),
+    submissions: (id: number) => request<AcaSubmission[]>("GET", `/school/academics/assignments/${id}/submissions`),
+    saveSubmission: (id: number, studentId: number, b: { submitted: boolean; marks?: number | null; remarks?: string }) => request<unknown>("PUT", `/school/academics/assignments/${id}/submissions/${studentId}`, b),
+  },
+  finance: {
+    options: () => request<FinOptions>("GET", "/school/finance/options"),
+    students: (q: string) => request<FinStudent[]>("GET", `/school/finance/students${qs({ q })}`),
+    openInvoices: (studentId: number) => request<FinInvoice[]>("GET", `/school/finance/students/${studentId}/invoices`),
+    studentPayments: (studentId: number) => request<FinStudentPay[]>("GET", `/school/finance/students/${studentId}/payments`),
+    invoices: (f: { yearId?: number | null; termId?: number | null; classId?: number | null; status?: string; q?: string }, page: number, size = 10) => request<FinInvoicePage>("GET", `/school/finance/invoices${qs({ ...f, page, size })}`),
+    invoice: (id: number) => request<FinInvoiceDetail>("GET", `/school/finance/invoices/${id}`),
+    generate: (b: FinGenBody) => request<FinGenResult>("POST", "/school/finance/invoices/generate", b),
+    pay: (b: FinPayBody) => request<FinReceipt>("POST", "/school/finance/payments", b),
+    receipt: (id: number) => request<FinReceipt>("GET", `/school/finance/payments/${id}/receipt`),
+    structures: (f: { yearId?: number | null; classId?: number | null }) => request<FinStructure[]>("GET", `/school/finance/structures${qs(f)}`),
+    addStructure: (b: FinStructureBody) => request<{ id: number }>("POST", "/school/finance/structures", b),
+    updateStructure: (id: number, b: FinStructureBody) => request<{ id: number }>("PUT", `/school/finance/structures/${id}`, b),
+    removeStructure: (id: number) => request<void>("DELETE", `/school/finance/structures/${id}`),
+    concessions: (f: { classId?: number | null; status?: string }, page: number, size = 10) => request<FinConcessionPage>("GET", `/school/finance/concessions${qs({ ...f, page, size })}`),
+    requestConcession: (b: { invoiceId: number | null; percent: number | null; reason: string }) => request<{ id: number }>("POST", "/school/finance/concessions", b),
+    decideConcession: (id: number, approve: boolean) => request<unknown>("POST", `/school/finance/concessions/${id}/decide`, { approve }),
+    withdrawConcession: (id: number) => request<void>("DELETE", `/school/finance/concessions/${id}`),
+    scholarships: (f: { yearId?: number | null; status?: string }, page: number, size = 10) => request<FinScholarshipPage>("GET", `/school/finance/scholarships${qs({ ...f, page, size })}`),
+    award: (b: { studentId: number | null; yearId: number | null; termId: number | null; name: string; amount: number | null; validity: string }) => request<{ id: number; applied: number; unapplied: number }>("POST", "/school/finance/scholarships", b),
+    revokeScholarship: (id: number) => request<unknown>("POST", `/school/finance/scholarships/${id}/revoke`),
+    refunds: (f: { from?: string; to?: string; status?: string }, page: number, size = 10) => request<FinRefundPage>("GET", `/school/finance/refunds${qs({ ...f, page, size })}`),
+    requestRefund: (b: { paymentId: number | null; amount: number | null; reason: string }) => request<{ id: number }>("POST", "/school/finance/refunds", b),
+    decideRefund: (id: number, approve: boolean) => request<unknown>("POST", `/school/finance/refunds/${id}/decide`, { approve }),
+  },
   platform: {
     get: () => request<PlatformSettings>("GET", "/platform-settings"),
     save: (b: Record<string, string>) => request<PlatformSettings>("PUT", "/platform-settings", b),
@@ -900,6 +1133,58 @@ export const api = {
     drivers: { list: () => request<TransportDriverRow[]>("GET", "/transport/drivers"), ...crud<TransportDriverRow, TransportDriverBody>("/transport/drivers") },
   },
 
+  schoolComm: {
+    options: () => request<MsgOptions>("GET", "/school/communication/options"),
+    preview: (audience: string, classId: number | null, sectionId: number | null, channel: string) => request<{ total: number; reachable: number }>("GET", `/school/communication/preview${qs({ audience, classId, sectionId, channel })}`),
+    send: (b: MsgSend) => request<{ id: number; status: string; recipients?: number; reachable?: number }>("POST", "/school/communication/messages", b),
+    messages: (f: { from?: string; to?: string; channel?: string; status?: string }, page: number, size = 10) => request<MsgPage>("GET", `/school/communication/messages${qs({ ...f, page, size })}`),
+    message: (id: number) => request<MsgDetail>("GET", `/school/communication/messages/${id}`),
+    cancel: (id: number) => request<void>("POST", `/school/communication/messages/${id}/cancel`),
+    templates: (q: string, category: string) => request<MsgTemplate[]>("GET", `/school/communication/templates${qs({ q, category })}`),
+    addTemplate: (b: MsgTemplateBody) => request<{ id: number }>("POST", "/school/communication/templates", b),
+    updateTemplate: (id: number, b: MsgTemplateBody) => request<{ id: number }>("PUT", `/school/communication/templates/${id}`, b),
+    deleteTemplate: (id: number) => request<void>("DELETE", `/school/communication/templates/${id}`),
+    starterTemplates: () => request<{ added: number }>("POST", "/school/communication/templates/starter"),
+    notifications: (kind: string, unread: boolean, page: number, size = 10) => request<MsgNotifPage>("GET", `/school/communication/notifications${qs({ kind, unread: unread ? "true" : undefined, page, size })}`),
+    unreadCount: () => request<{ unread: number }>("GET", "/school/communication/notifications/unread-count"),
+    markRead: (id: number) => request<void>("POST", `/school/communication/notifications/${id}/read`),
+    markAllRead: () => request<void>("POST", "/school/communication/notifications/read-all"),
+    announcements: (f: { audience?: string; status?: string }, page: number, size = 10) => request<MsgAnnouncementPage>("GET", `/school/communication/announcements${qs({ ...f, page, size })}`),
+    addAnnouncement: (b: MsgAnnouncementBody) => request<{ id: number }>("POST", "/school/communication/announcements", b),
+    updateAnnouncement: (id: number, b: MsgAnnouncementBody) => request<{ id: number }>("PUT", `/school/communication/announcements/${id}`, b),
+    setAnnouncementStatus: (id: number, status: string) => request<{ id: number; status: string }>("PUT", `/school/communication/announcements/${id}/status`, { status }),
+    deleteAnnouncement: (id: number) => request<void>("DELETE", `/school/communication/announcements/${id}`),
+  },
+  schoolCalendar: {
+    options: () => request<CalOptions>("GET", "/school/calendar/options"),
+    events: (from: string, to: string, type: string, audience: string) => request<CalEvent[]>("GET", `/school/calendar/events${qs({ from, to, type, audience })}`),
+    add: (b: CalEventBody) => request<{ id: number }>("POST", "/school/calendar/events", b),
+    update: (id: number, b: CalEventBody) => request<{ id: number }>("PUT", `/school/calendar/events/${id}`, b),
+    remove: (id: number) => request<void>("DELETE", `/school/calendar/events/${id}`),
+  },
+  schoolReports: {
+    options: () => request<RptOptions>("GET", "/school/reports/options"),
+    run: (b: RptRun) => request<RptTable>("POST", "/school/reports/run", b),
+    runCustom: (b: RptCustom) => request<RptTable>("POST", "/school/reports/custom/run", b),
+    saved: () => request<RptSaved[]>("GET", "/school/reports/custom"),
+    save: (b: RptCustom) => request<{ id: number }>("POST", "/school/reports/custom", b),
+    remove: (id: number) => request<void>("DELETE", `/school/reports/custom/${id}`),
+  },
+  schoolSettings: {
+    all: () => request<SetAll>("GET", "/school/settings"),
+    saveGeneral: (b: { name: string; academicYearId: number | null; language: string; timeZone: string; dateFormat: string }) => request<void>("PUT", "/school/settings/general", b),
+    saveAcademic: (b: { gradingScale: string; periodDuration: number | null; attendancePerPeriod: boolean; lateMarkingAllowed: boolean; lateMarkingMinutes: number | null }) => request<void>("PUT", "/school/settings/academic", b),
+    saveAdmissions: (b: SetAdmissions) => request<void>("PUT", "/school/settings/admissions", b),
+    saveFees: (b: { currency: string; billingFrequency: string; dueDateRule: string; lateFeeRule: string; lateFeeAmount: number | null; receiptPrefix: string }) => request<void>("PUT", "/school/settings/fees", b),
+    saveIntegration: (service: string, provider: string) => request<void>("PUT", `/school/settings/integrations/${service}`, { provider }),
+    uploadLogo: (file: File) => { const f = new FormData(); f.append("file", file); return request<void>("PUT", "/school/settings/logo", f); },
+    deleteLogo: () => request<void>("DELETE", "/school/settings/logo"),
+    users: (q: string, role: string) => request<SetUser[]>("GET", `/school/settings/users${qs({ q, role })}`),
+    invite: (b: { firstName: string; lastName: string; email: string; phone: string; role: string }) => request<SetInvited>("POST", "/school/settings/users", b),
+    setRole: (id: number, role: string) => request<SetUser>("PUT", `/school/settings/users/${id}/role`, { role }),
+    setUserStatus: (id: number, status: string) => request<SetUser>("PUT", `/school/settings/users/${id}/status`, { status }),
+    resetPassword: (id: number) => request<{ temporaryPassword: string }>("POST", `/school/settings/users/${id}/reset-password`),
+  },
   generalSettings: {
     get: () => request<GeneralSettings>("GET", "/settings/general"),
     save: (body: GeneralSettings) => request<GeneralSettings>("PUT", "/settings/general", body),
