@@ -49,7 +49,7 @@ export default function SchoolLayout({ children, schoolName }: { children: React
   const initials = display.split(/\s+/).filter(Boolean).slice(0, 2).map((w) => w[0]).join("").toUpperCase() || "SA";
   const role = user?.role === "SUPER_ADMIN" ? "Super Admin (previewing)" : "School Administrator";
 
-  const signOut = () => { api.auth.logout(); nav("/login", { replace: true }); };
+  const signOut = () => { api.auth.logout(); nav("/", { replace: true }); };
   const go = (p: string) => { setOpen(false); if (p !== pathname) nav(p); };
 
   const sidebar = (

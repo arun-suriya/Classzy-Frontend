@@ -670,6 +670,62 @@ export interface SetAll { general: SetGeneral; academic: SetAcademic; admissions
 export interface SetUser { id: number; fullName: string; email: string; userType: string; role: string; status: string; canSignIn: boolean; self: boolean }
 export interface SetInvited { user: SetUser; temporaryPassword: string | null; canSignIn: boolean }
 
+export interface ExCode { code: string; label: string }
+export interface ExOptions { years: { id: number; name: string; current: boolean }[]; terms: { id: number; yearId: number; name: string }[]; classes: { id: number; yearId: number; name: string }[]; sections: { id: number; classId: number; className: string; name: string }[]; classSubjects: { classId: number; subjectId: number; name: string }[]; types: ExCode[]; scales: ExCode[] }
+export interface ExExam { id: number; name: string; yearId: number; termId: number | null; termName: string | null; type: string; typeLabel: string; startDate: string; endDate: string; scale: string; passPercent: number; published: boolean; stage: string; sectionIds: number[]; gradesLabel: string; papers: number; createdBy: string | null }
+export interface ExExamBody { name: string; yearId: number | null; termId: number | null; type: string; sectionIds: number[]; startDate: string; endDate: string; scale: string; passPercent: number | null }
+export interface ExUpcoming { examId: number; examName: string; subject: string; grade: string; date: string; stage: string }
+export interface ExOverview { scheduled: number; inProgress: number; pendingReview: number; upcoming: ExUpcoming[]; exams: ExExam[] }
+export interface ExPaper { id: number; examId: number; classId: number; className: string; subjectId: number; subjectName: string; date: string; startTime: string; endTime: string; room: string | null; maxMarks: number }
+export interface ExBand { grade: string; min: number | null; max: number | null; remark: string | null }
+export interface ExEntryRow { studentId: number; admissionNo: string; name: string; marks: number | null; absent: boolean }
+export interface ExEntry { status: string; maxMarks: number; passPercent: number; editable: boolean; reviewedBy: string | null; rows: ExEntryRow[] }
+export interface ExTable { title: string; subtitle: string; columns: string[]; numeric: boolean[]; rows: string[][]; total: string[] | null; note: string | null }
+
+// ---- School attendance
+export interface AtCode { code: string; label: string }
+export interface AtOptions { today: string; yearName: string | null; classes: { id: number; name: string }[]; sections: { id: number; classId: number; className: string; name: string }[]; terms: { id: number; name: string; startDate: string; endDate: string }[]; minPercent: number; countLate: boolean; countLeave: boolean; adjustmentEnabled: boolean; statuses: AtCode[]; leaveTypes: AtCode[] }
+export interface AtStudent { id: number; admissionNo: string; name: string; grade: string }
+export interface AtDay { date: string; schoolDay: boolean; reason: string | null }
+export interface AtOverview { day: AtDay; total: number; present: number; absent: number; onLeave: number; late: number; notMarked: number; presentPercent: number; absentPercent: number; leavePercent: number; recent: { student: string; grade: string | null; status: string }[] }
+export interface AtDailyRow { studentId: number; admissionNo: string; name: string; status: string | null; remarks: string | null; fromLeave: boolean }
+export interface AtDaily { day: AtDay; editable: boolean; lockReason: string | null; sectionName: string; rows: AtDailyRow[] }
+export interface AtLeave { id: number; studentId: number; student: string; admissionNo: string; grade: string; type: string; typeLabel: string; from: string; to: string; reason: string | null; status: string; decidedBy: string | null }
+export interface AtTrends { average: number; lowestMonth: string | null; lowest: number; chronic: number; minPercent: number; months: { month: string; rate: number; below: number }[] }
+export interface AtCalendar { student: string; grade: string; month: string; days: { date: string; status: string | null; off: string | null }[]; present: number; absent: number; late: number; leave: number }
+
+// ---- Staff management
+export interface SfCode { code: string; label: string }
+export interface SfOptions { departments: { id: number; name: string }[]; designations: { staffType: string; name: string }[]; staffTypes: SfCode[]; leaveTypes: SfCode[]; staff: { id: number; code: string; name: string; departmentId: number | null; active: boolean }[]; today: string }
+export interface SfLeave { id: number; teacherId: number; staff: string; code: string; type: string; typeLabel: string; from: string; to: string; days: number; reason: string | null; status: string; decidedBy: string | null }
+export interface SfOverview { total: number; teaching: number; nonTeaching: number; onLeave: number; upcoming: SfLeave[] }
+export interface SfStaff { id: number; code: string; name: string; email: string | null; phone: string | null; departmentId: number | null; department: string | null; designation: string | null; staffType: string; typeLabel: string; joiningDate: string | null; active: boolean; onLeave: boolean }
+export interface SfStaffBody { fullName: string; email: string; phone: string; departmentId: number | null; designation: string; staffType: string; joiningDate: string }
+export interface SfDept { id: number; name: string; headId: number | null; head: string | null; staff: number }
+export interface SfCycle { id: number; name: string; dueDate: string; total: number; completed: number }
+export interface SfAppraisal { id: number; cycleId: number; teacherId: number; staff: string; department: string | null; reviewerId: number | null; reviewer: string | null; dueDate: string; status: string; rating: number | null; comments: string | null }
+export interface SfTraining { id: number; title: string; date: string; time: string | null; venue: string | null; trainer: string | null; description: string | null; status: string; participants: number; teacherIds: number[] }
+export interface SfTrainingBody { title: string; date: string; time: string; venue: string; trainer: string; description: string; teacherIds: number[] }
+export interface SfVacancy { id: number; position: string; departmentId: number | null; department: string | null; openings: number; description: string | null; closingDate: string | null; status: string; applicants: number; hired: number }
+export interface SfVacancyBody { position: string; departmentId: number | null; openings: number | null; description: string; closingDate: string }
+export interface SfApplicant { id: number; vacancyId: number; name: string; email: string | null; phone: string | null; status: string; notes: string | null; appliedAt: string }
+export interface SfApplicantBody { name: string; email: string; phone: string; notes: string; status: string }
+
+// ---- School transport desk
+export interface TrCode { code: string; label: string }
+export interface TrOptions { today: string; routes: { id: number; name: string; code: string; tripType: string; status: string; vehicleId: number | null }[]; vehicles: { id: number; number: string; type: string; capacity: number; status: string; driver: string | null }[]; classes: { id: number; name: string }[]; sections: { id: number; classId: number; className: string; name: string }[]; tripTypes: TrCode[]; vehicleTypes: TrCode[]; tripStatuses: TrCode[] }
+export interface TrOverview { routes: number; vehicles: number; students: number; trips: { routeId: number; route: string; tripType: string; vehicle: string | null; status: string; delayMinutes: number }[] }
+export interface TrRoute { id: number; name: string; code: string; tripType: string; vehicleId: number | null; vehicle: string | null; stops: number; students: number; status: string }
+export interface TrRouteBody { name: string; code: string; vehicleId: number | null; tripType: string; stops: string }
+export interface TrStop { id: number; name: string; sequence: number; arrival: string | null; students: number }
+export interface TrVehicleBody { vehicleNo: string; registrationNo: string; type: string; make: string; model: string; seatingCapacity: number | null }
+export interface TrStudent { id: number; admissionNo: string; name: string; pickupRoute: string | null; dropRoute: string | null }
+export interface TrAllocation { id: number; studentId: number; student: string; admissionNo: string; grade: string; routeId: number; route: string; tripType: string; stopId: number; stop: string }
+export interface TrLive { routeId: number; route: string; tripType: string; vehicle: string | null; hasTrip: boolean; status: string; delayMinutes: number; currentStopId: number | null; updatedAt: string | null; eta: string | null; stops: { id: number; name: string; sequence: number; arrival: string | null; reached: boolean; current: boolean }[] }
+export interface TrStaff { key: string; kind: string; id: number; name: string; role: string; phone: string; licenseNo: string | null; licenseExpiry: string | null; vehicleId: number | null; vehicle: string | null; status: string }
+export interface TrStaffBody { role: string; name: string; phone: string; licenseNo: string; licenseExpiry: string; vehicleId: number | null; status: string }
+
+
 export const api = {
   auth: {
     async login(email: string, password: string, remember = true): Promise<UserInfo> {
@@ -1184,6 +1240,98 @@ export const api = {
     setRole: (id: number, role: string) => request<SetUser>("PUT", `/school/settings/users/${id}/role`, { role }),
     setUserStatus: (id: number, status: string) => request<SetUser>("PUT", `/school/settings/users/${id}/status`, { status }),
     resetPassword: (id: number) => request<{ temporaryPassword: string }>("POST", `/school/settings/users/${id}/reset-password`),
+  },
+  schoolExams: {
+    options: () => request<ExOptions>("GET", "/school/exams/options"),
+    overview: (yearId: number | null) => request<ExOverview>("GET", `/school/exams/overview${qs({ yearId })}`),
+    create: (b: ExExamBody) => request<{ id: number }>("POST", "/school/exams", b),
+    update: (id: number, b: ExExamBody) => request<{ id: number }>("PUT", `/school/exams/${id}`, b),
+    remove: (id: number) => request<void>("DELETE", `/school/exams/${id}`),
+    publish: (id: number) => request<ExExam>("POST", `/school/exams/${id}/publish`),
+    unpublish: (id: number) => request<ExExam>("POST", `/school/exams/${id}/unpublish`),
+    papers: (id: number, classId: number | null) => request<ExPaper[]>("GET", `/school/exams/${id}/papers${qs({ classId })}`),
+    generate: (id: number, b: { startTime: string; minutes: number | null }) => request<{ created: number; existing: number }>("POST", `/school/exams/${id}/generate-timetable`, b),
+    updatePaper: (id: number, b: { date: string; startTime: string; endTime: string; room: string; maxMarks: number | null }) => request<ExPaper>("PUT", `/school/exams/papers/${id}`, b),
+    deletePaper: (id: number) => request<void>("DELETE", `/school/exams/papers/${id}`),
+    bands: () => request<ExBand[]>("GET", "/school/exams/grade-bands"),
+    saveBands: (bands: ExBand[]) => request<ExBand[]>("PUT", "/school/exams/grade-bands", { scale: "PERCENTAGE", bands }),
+    entry: (id: number, subjectId: number, sectionId: number) => request<ExEntry>("GET", `/school/exams/${id}/entry${qs({ subjectId, sectionId })}`),
+    saveEntry: (id: number, b: { subjectId: number; sectionId: number; rows: { studentId: number; marks: number | null; absent: boolean }[] }) => request<ExEntry>("PUT", `/school/exams/${id}/entry`, b),
+    submit: (id: number, subjectId: number, sectionId: number) => request<ExEntry>("POST", `/school/exams/${id}/entry/submit`, { subjectId, sectionId }),
+    approve: (id: number, subjectId: number, sectionId: number) => request<ExEntry>("POST", `/school/exams/${id}/entry/approve`, { subjectId, sectionId }),
+    reopen: (id: number, subjectId: number, sectionId: number) => request<ExEntry>("POST", `/school/exams/${id}/entry/reopen`, { subjectId, sectionId }),
+    report: (id: number, type: string, classId: number | null) => request<ExTable>("GET", `/school/exams/${id}/reports/${type}${qs({ classId })}`),
+  },
+  schoolAttendance: {
+    options: () => request<AtOptions>("GET", "/school/attendance/options"),
+    students: (sectionId: number) => request<AtStudent[]>("GET", `/school/attendance/students${qs({ sectionId })}`),
+    overview: (date: string, classId: number | null) => request<AtOverview>("GET", `/school/attendance/overview${qs({ date, classId })}`),
+    daily: (date: string, sectionId: number) => request<AtDaily>("GET", `/school/attendance/daily${qs({ date, sectionId })}`),
+    saveDaily: (b: { date: string; sectionId: number; rows: { studentId: number; status: string | null; remarks: string }[] }) => request<AtDaily>("PUT", "/school/attendance/daily", b),
+    report: (type: string, from: string, to: string, classId: number | null, sectionId: number | null) => request<ExTable>("GET", `/school/attendance/reports/${type}${qs({ from, to, classId, sectionId })}`),
+    leaves: (from: string, to: string, status: string) => request<AtLeave[]>("GET", `/school/attendance/leaves${qs({ from, to, status })}`),
+    addLeave: (b: { studentId: number | null; type: string; from: string; to: string; reason: string }) => request<{ id: number }>("POST", "/school/attendance/leaves", b),
+    decide: (id: number, action: "approve" | "reject" | "cancel") => request<{ id: number }>("POST", `/school/attendance/leaves/${id}/${action}`),
+    trends: (termId: number, classId: number | null) => request<AtTrends>("GET", `/school/attendance/trends${qs({ termId, classId })}`),
+    calendar: (studentId: number, month: string) => request<AtCalendar>("GET", `/school/attendance/calendar${qs({ studentId, month })}`),
+  },
+  schoolStaff: {
+    options: () => request<SfOptions>("GET", "/school/staff/options"),
+    overview: () => request<SfOverview>("GET", "/school/staff/overview"),
+    directory: (q: { q: string; departmentId: number | null; type: string; status: string; page: number; size: number }) => request<{ items: SfStaff[]; total: number }>("GET", `/school/staff/directory${qs(q)}`),
+    create: (b: SfStaffBody) => request<{ id: number; code: string }>("POST", "/school/staff/members", b),
+    update: (id: number, b: SfStaffBody) => request<{ id: number }>("PUT", `/school/staff/members/${id}`, b),
+    setActive: (id: number, value: boolean) => request<{ id: number }>("POST", `/school/staff/members/${id}/active${qs({ value: String(value) })}`),
+    departments: () => request<SfDept[]>("GET", "/school/staff/departments"),
+    addDept: (b: { name: string; headId: number | null }) => request<{ id: number }>("POST", "/school/staff/departments", b),
+    updateDept: (id: number, b: { name: string; headId: number | null }) => request<{ id: number }>("PUT", `/school/staff/departments/${id}`, b),
+    deleteDept: (id: number) => request<void>("DELETE", `/school/staff/departments/${id}`),
+    leaves: (from: string, to: string, status: string) => request<SfLeave[]>("GET", `/school/staff/leaves${qs({ from, to, status })}`),
+    addLeave: (b: { teacherId: number | null; type: string; from: string; to: string; reason: string }) => request<{ id: number }>("POST", "/school/staff/leaves", b),
+    decide: (id: number, action: "approve" | "reject" | "cancel") => request<{ id: number }>("POST", `/school/staff/leaves/${id}/${action}`),
+    cycles: () => request<SfCycle[]>("GET", "/school/staff/cycles"),
+    startCycle: (b: { name: string; dueDate: string; departmentId: number | null }) => request<{ id: number; created: number }>("POST", "/school/staff/cycles", b),
+    deleteCycle: (id: number) => request<void>("DELETE", `/school/staff/cycles/${id}`),
+    appraisals: (cycleId: number, departmentId: number | null) => request<SfAppraisal[]>("GET", `/school/staff/appraisals${qs({ cycleId, departmentId })}`),
+    updateAppraisal: (id: number, b: { reviewerId: number | null; dueDate: string; status: string; rating: number | null; comments: string }) => request<{ id: number }>("PUT", `/school/staff/appraisals/${id}`, b),
+    trainings: () => request<SfTraining[]>("GET", "/school/staff/trainings"),
+    addTraining: (b: SfTrainingBody) => request<{ id: number }>("POST", "/school/staff/trainings", b),
+    updateTraining: (id: number, b: SfTrainingBody) => request<{ id: number }>("PUT", `/school/staff/trainings/${id}`, b),
+    cancelTraining: (id: number, value: boolean) => request<void>("POST", `/school/staff/trainings/${id}/cancelled${qs({ value: String(value) })}`),
+    deleteTraining: (id: number) => request<void>("DELETE", `/school/staff/trainings/${id}`),
+    vacancies: () => request<SfVacancy[]>("GET", "/school/staff/vacancies"),
+    addVacancy: (b: SfVacancyBody) => request<{ id: number }>("POST", "/school/staff/vacancies", b),
+    updateVacancy: (id: number, b: SfVacancyBody) => request<{ id: number }>("PUT", `/school/staff/vacancies/${id}`, b),
+    setVacancyOpen: (id: number, value: boolean) => request<void>("POST", `/school/staff/vacancies/${id}/open${qs({ value: String(value) })}`),
+    deleteVacancy: (id: number) => request<void>("DELETE", `/school/staff/vacancies/${id}`),
+    applicants: (id: number) => request<SfApplicant[]>("GET", `/school/staff/vacancies/${id}/applicants`),
+    addApplicant: (id: number, b: SfApplicantBody) => request<{ id: number }>("POST", `/school/staff/vacancies/${id}/applicants`, b),
+    updateApplicant: (id: number, b: SfApplicantBody) => request<{ id: number }>("PUT", `/school/staff/applicants/${id}`, b),
+    deleteApplicant: (id: number) => request<void>("DELETE", `/school/staff/applicants/${id}`),
+  },
+  schoolTransit: {
+    options: () => request<TrOptions>("GET", "/school/transit/options"),
+    overview: () => request<TrOverview>("GET", "/school/transit/overview"),
+    addVehicle: (b: TrVehicleBody) => request<{ id: number }>("POST", "/school/transit/vehicles", b),
+    routes: (q: string) => request<TrRoute[]>("GET", `/school/transit/routes${qs({ q })}`),
+    createRoute: (b: TrRouteBody) => request<{ id: number }>("POST", "/school/transit/routes", b),
+    updateRoute: (id: number, b: Omit<TrRouteBody, "stops">) => request<{ id: number }>("PUT", `/school/transit/routes/${id}`, b),
+    setRouteActive: (id: number, value: boolean) => request<{ id: number }>("POST", `/school/transit/routes/${id}/active${qs({ value: String(value) })}`),
+    deleteRoute: (id: number) => request<void>("DELETE", `/school/transit/routes/${id}`),
+    stops: (id: number) => request<TrStop[]>("GET", `/school/transit/routes/${id}/stops`),
+    saveStops: (id: number, stops: { id: number | null; name: string; arrival: string }[]) => request<TrStop[]>("PUT", `/school/transit/routes/${id}/stops`, { stops }),
+    students: (sectionId: number) => request<TrStudent[]>("GET", `/school/transit/students${qs({ sectionId })}`),
+    allocations: (q: { classId: number | null; routeId: number | null; page: number; size: number }) => request<{ items: TrAllocation[]; total: number }>("GET", `/school/transit/allocations${qs(q)}`),
+    allocate: (b: { studentId: number | null; routeId: number | null; stopId: number | null }) => request<{ id: number }>("POST", "/school/transit/allocations", b),
+    reallocate: (id: number, b: { studentId: number | null; routeId: number | null; stopId: number | null }) => request<{ id: number }>("PUT", `/school/transit/allocations/${id}`, b),
+    deallocate: (id: number) => request<void>("DELETE", `/school/transit/allocations/${id}`),
+    live: (routeId: number) => request<TrLive>("GET", `/school/transit/live/${routeId}`),
+    updateTrip: (routeId: number, b: { status: string; currentStopId: number | null; delayMinutes: number | null }) => request<TrLive>("PUT", `/school/transit/live/${routeId}`, b),
+    staff: (role: string) => request<TrStaff[]>("GET", `/school/transit/staff${qs({ role })}`),
+    addStaff: (b: TrStaffBody) => request<{ id: number }>("POST", "/school/transit/staff", b),
+    updateStaff: (kind: string, id: number, b: TrStaffBody) => request<{ id: number }>("PUT", `/school/transit/staff/${kind}/${id}`, b),
+    deleteStaff: (kind: string, id: number) => request<void>("DELETE", `/school/transit/staff/${kind}/${id}`),
+    report: (type: string, from: string, to: string, routeId: number | null) => request<ExTable>("GET", `/school/transit/reports/${type}${qs({ from, to, routeId })}`),
   },
   generalSettings: {
     get: () => request<GeneralSettings>("GET", "/settings/general"),

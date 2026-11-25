@@ -52,6 +52,10 @@ import Communication from "./pages/school/Communication";
 import Calendar from "./pages/school/Calendar";
 import Reports from "./pages/school/Reports";
 import SchoolSettings from "./pages/school/Settings";
+import Examinations from "./pages/school/Examinations";
+import AttendanceBoard from "./pages/school/AttendanceBoard";
+import StaffDesk from "./pages/school/StaffDesk";
+import TransportDesk from "./pages/school/TransportDesk";
 import SchoolSection from "./pages/school/SchoolSection";
 
 // Keep your existing imports for Dashboard and Schools.
@@ -138,6 +142,10 @@ function App() {
           <Route path="/school/calendar" element={<Calendar />} />
           <Route path="/school/reports" element={<Reports />} />
           <Route path="/school/settings" element={<SchoolSettings />} />
+          <Route path="/school/examinations" element={<Examinations />} />
+          <Route path="/school/attendance" element={<AttendanceBoard />} />
+          <Route path="/school/staff" element={<StaffDesk />} />
+          <Route path="/school/transport" element={<TransportDesk />} />
           <Route path="/school/:section" element={<SchoolSection />} />
         </Route>
 
